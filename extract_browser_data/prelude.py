@@ -15,4 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION = '0.1'
+from sys import platform as PLATFORM
+
+import extract_browser_data.util as util
+
+WIN32 = bool(PLATFORM in ['win32', 'cygwin'])
+LINUX = bool(PLATFORM == 'linux')
+MACOS = bool(PLATFORM == 'darwin')

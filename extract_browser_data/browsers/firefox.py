@@ -20,8 +20,8 @@ import json
 import datetime
 import configparser
 
-from extract_browser_data.api.browser import Profile, Browser
-from extract_browser_data.api import *
+from extract_browser_data.browser import Profile, Browser
+from extract_browser_data.prelude import *
 
 
 class FirefoxProfile(Profile):

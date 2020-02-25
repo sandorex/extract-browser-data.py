@@ -1,1 +1,0 @@
-import extract_browser_data.api.browsers.firefox
