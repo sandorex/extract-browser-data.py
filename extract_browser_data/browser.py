@@ -47,22 +47,22 @@ class Profile(ABC):
       raise NotImplementedError()
 
    @abstractmethod
-   def get_history(self, raw=False):
+   def get_history(self):
       '''Returns browsing history'''
       raise NotImplementedError()
 
    @abstractmethod
-   def get_bookmarks(self, raw=False):
+   def get_bookmarks(self):
       '''Returns bookmarks'''
       raise NotImplementedError()
 
    @abstractmethod
-   def get_autofill(self, raw=False):
+   def get_autofill(self):
       '''Returns autofill data'''
       raise NotImplementedError()
 
    @abstractmethod
-   def get_cookies(self, raw=False):
+   def get_cookies(self):
       '''Returns autofill data'''
       raise NotImplementedError()
 

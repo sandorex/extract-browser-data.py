@@ -17,11 +17,25 @@
 
 import os
 import json
-import datetime
 import configparser
 
+from datetime import datetime
 from extract_browser_data.browser import Profile, Browser
 from extract_browser_data.prelude import *
+
+
+def date_from_epoch(epoch, divider=None):
+   """Converts epoch to datetime
+
+   If `epoch` is `None` returns `None`
+   """
+   if epoch is None:
+      return None
+
+   if divider is not None:
+      epoch /= divider
+
+   return datetime.utcfromtimestamp(epoch)
 
 
 class FirefoxProfile(Profile):
@@ -47,6 +61,7 @@ class FirefoxProfile(Profile):
    def get_extension_list(self):
       FILE = os.path.join(self.path, 'extensions.json')
 
+      # NOTE utf8 encoding here is required
       with open(FILE, encoding='utf8') as f:
          data = json.load(f)
 
@@ -65,49 +80,81 @@ class FirefoxProfile(Profile):
          if extension["location"] != "app-profile":
             continue
 
-         # TODO add url or some id if possible
-         extensions.append(extension["defaultLocale"]["name"].strip())
+         data = {}
+         data['id'] = extension['id']
+         data['version'] = extension['version']
+         data['download-url'] = extension['sourceURI']
+
+         # both installDate and updateDate are in milliseconds since epoch
+         data['install-date'] = date_from_epoch(extension['installDate'], 1000)
+         data['last-update'] = date_from_epoch(extension['updateDate'], 1000)
+
+         # mozilla.org redirects to the page of the addon when id is supplied
+         data[
+             'url'] = 'https://addons.mozilla.org/en-US/firefox/addon/{}/'.format(
+                 data['id'])
+
+         # find english locale
+         for locale in extension['locales']:
+            if 'en' in locale['locales']:
+               data['name'] = locale['name']
+               data['description'] = locale['description']
+               data['creator'] = locale['creator']
+
+         # fallback
+         if 'name' not in data:
+            data['name'] = extension["defaultLocale"]['name']
+            data['description'] = extension["defaultLocale"]['description']
+            data['creator'] = extension["defaultLocale"]['creator']
+
+         # some extensions have newlines at the end
+         data['description'] = data['description'].strip()
+
+         extensions.append(data)
 
       return extensions
 
-   def get_history(self, raw=False):
-      # TODO raw later
-      if raw:
-         raise NotImplementedError()
-
+   def get_history(self):
       FILE = os.path.join(self.path, 'places.sqlite')
 
-      # currently only getting url, title and time
       with util.connect_readonly(FILE) as conn:
          cursor = conn.cursor()
          cursor.execute(r'''SELECT url, title, last_visit_date
                             FROM moz_places ORDER BY last_visit_date DESC''')
 
-         data = []
-         for url, title, time_epoch in cursor.fetchall():
+         # time is in microseconds since epoch
+         return [{
+             'url': url,
+             'title': title,
+             'last_visit': date_from_epoch(last_visit, 1000000)
+         } for url, title, last_visit in cursor.fetchall()]
 
-            if time_epoch is not None:
-               # time is in microseconds since epoch so im dividing it
-               time = datetime.datetime.utcfromtimestamp(
-                   int(time_epoch / 1000000))
-            else:
-               time = None
+   def get_bookmarks(self):
+      FILE = os.path.join(self.path, 'places.sqlite')
 
-            data.append((url, title, time))
+      with util.connect_readonly(FILE) as conn:
+         cursor = conn.cursor()
+         cursor.execute(r'''SELECT P.url, B.title, B.dateAdded, B.lastModified
+                            FROM moz_bookmarks B
+                            JOIN moz_places P
+                            WHERE B.fk == P.id
+                            ORDER BY B.lastModified DESC''')
 
-      return data
+         # TODO get the folder hiarcharchy
 
-   def get_bookmarks(self, raw=False):
-      if not raw:
-         raise NotImplementedError()
+         # time is in microseconds since epoch
+         return [{
+             'url': url,
+             'title': title,
+             'date_added': date_from_epoch(date_added, 1000000),
+             'last_modified': date_from_epoch(last_modified, 1000000)
+         } for url, title, date_added, last_modified in cursor.fetchall()]
 
-   def get_autofill(self, raw=False):
-      if not raw:
-         raise NotImplementedError()
+   def get_autofill(self):
+      raise NotImplementedError()
 
-   def get_cookies(self, raw=False):
-      if not raw:
-         raise NotImplementedError()
+   def get_cookies(self):
+      raise NotImplementedError()
 
 
 class FirefoxBrowser(Browser):
