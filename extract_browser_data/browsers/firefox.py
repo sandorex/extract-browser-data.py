@@ -47,9 +47,9 @@ def date_from_epoch(epoch):
 
 
 class FirefoxProfile(Profile):
-   '''Profile class for Firefox browser'''
-   def __init__(self, name, path, default=False):
-      super().__init__(name, path)
+   '''Profile class for Firefox-based browsers'''
+   def __init__(self, name, path, browser_name, default=False):
+      super().__init__(name, path, browser_name)
 
       self.default = default
 
@@ -189,7 +189,7 @@ class FirefoxProfile(Profile):
 
 
 class FirefoxBrowser(Browser):
-   '''Browser class for Firefox browser'''
+   '''Browser class for Firefox-based browsers'''
    def is_browser_running(self):
       # firefox doesn't have a global lockfile so i am checking if any profile
       # is running
@@ -231,16 +231,13 @@ class FirefoxBrowser(Browser):
          # normalize it just in case
          path = os.path.normpath(path)
 
-         profiles.append(FirefoxProfile(name, path, default=default))
+         profiles.append(
+             FirefoxProfile(name,
+                            path,
+                            self.get_browser_name(),
+                            default=default))
 
       return profiles
-
-   def find_profile(self, profile_name):
-      for profile in self.get_profiles():
-         if profile.get_profile_name() == profile_name:
-            return profile
-
-      return None
 
    def get_default_user_data_path(self):
       if WIN32:
@@ -249,7 +246,5 @@ class FirefoxBrowser(Browser):
          path = '$HOME/.mozilla/firefox'
       elif MACOS:  # TODO may be wrong
          path = '$HOME/Library/Application Support/Firefox'
-      else:
-         path = None
 
       return os.path.expandvars(os.path.normpath(path))

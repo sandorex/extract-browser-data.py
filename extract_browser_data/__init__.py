@@ -16,3 +16,5 @@
 # limitations under the License.
 
 VERSION = '0.1'
+
+import extract_browser_data.browsers

@@ -16,6 +16,7 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 
 class Profile(ABC):
@@ -24,9 +25,10 @@ class Profile(ABC):
    `name` represents name of the profile
    `path` represents absolute path to the profile
    """
-   def __init__(self, name, path):
+   def __init__(self, name, path, browser_name):
       self.name = name
-      self.path = path
+      self.path = Path(path)
+      self.browser_name = browser_name
 
    def get_profile_name(self):
       '''Returns name of the profile'''
@@ -35,6 +37,10 @@ class Profile(ABC):
    def get_profile_path(self):
       '''Returns absolute path to the profile directory'''
       return self.path
+
+   def get_browser_name(self):
+      '''Returns name of the browser that created the profile'''
+      return self.browser_name
 
    @abstractmethod
    def is_profile_running(self):
@@ -75,13 +81,27 @@ class Browser(ABC):
    """
    def __init__(self, user_data_path=None):
       if user_data_path is not None:
-         self.user_data_path = user_data_path
+         self.user_data_path = Path(user_data_path)
       else:
-         self.user_data_path = self.get_default_user_data_path()
+         self.user_data_path = Path(self.get_default_user_data_path())
 
    def get_user_data_path(self):
       '''Returns user data path'''
       return self.user_data_path
+
+   def find_profile(self, profile_name):
+      '''Tries to find a browser profile using the profile name, if it fails it
+      returns `None`'''
+      for profile in self.get_profiles():
+         if profile.get_profile_name() == profile_name:
+            return profile
+
+      return None
+
+   @classmethod
+   def new(cls, user_data_path=None):
+      '''Returns a new instance of browser using a different path'''
+      return cls(user_data_path)
 
    @abstractmethod
    def is_browser_running(self):
@@ -100,12 +120,6 @@ class Browser(ABC):
    @abstractmethod
    def get_profiles(self):
       '''Returns all browser profiles'''
-      raise NotImplementedError()
-
-   @abstractmethod
-   def find_profile(self, profile_name):
-      '''Tries to find a browser profile using the profile name, if it fails it
-      returns `None`'''
       raise NotImplementedError()
 
    @abstractmethod
