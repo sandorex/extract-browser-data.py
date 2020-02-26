@@ -24,16 +24,24 @@ from extract_browser_data.browser import Profile, Browser
 from extract_browser_data.prelude import *
 
 
-def date_from_epoch(epoch, divider=None):
+def date_from_epoch(epoch):
    """Converts epoch to datetime
 
-   If `epoch` is `None` returns `None`
+   Supports seconds, milliseconds, microseconds from epoch
+
+   If `epoch` is `None` or too big for OS API to handle `epoch` will be returned
    """
    if epoch is None:
-      return None
+      return epoch
 
-   if divider is not None:
-      epoch /= divider
+   if epoch > 99_999_999_999_999:  # >14 digits is in microseconds
+      epoch /= 1_000_000
+   elif epoch > 99_999_999_999:  # >11 digits is in milliseconds
+      epoch /= 1_000
+
+   # winapi cannot handle much bigger than this..
+   if WIN32 and epoch > 32503680000:
+      return epoch
 
    return datetime.utcfromtimestamp(epoch)
 
@@ -86,8 +94,8 @@ class FirefoxProfile(Profile):
          data['download-url'] = extension['sourceURI']
 
          # both installDate and updateDate are in milliseconds since epoch
-         data['install-date'] = date_from_epoch(extension['installDate'], 1000)
-         data['last-update'] = date_from_epoch(extension['updateDate'], 1000)
+         data['install-date'] = date_from_epoch(extension['installDate'])
+         data['last-update'] = date_from_epoch(extension['updateDate'])
 
          # mozilla.org redirects to the page of the addon when id is supplied
          data[
@@ -115,9 +123,8 @@ class FirefoxProfile(Profile):
       return extensions
 
    def get_history(self):
-      FILE = os.path.join(self.path, 'places.sqlite')
-
-      with util.connect_readonly(FILE) as conn:
+      with util.connect_readonly(os.path.join(self.path,
+                                              'places.sqlite')) as conn:
          cursor = conn.cursor()
          cursor.execute(r'''SELECT url, title, last_visit_date
                             FROM moz_places ORDER BY last_visit_date DESC''')
@@ -126,13 +133,12 @@ class FirefoxProfile(Profile):
          return [{
              'url': url,
              'title': title,
-             'last_visit': date_from_epoch(last_visit, 1000000)
+             'last_visit': date_from_epoch(last_visit)
          } for url, title, last_visit in cursor.fetchall()]
 
    def get_bookmarks(self):
-      FILE = os.path.join(self.path, 'places.sqlite')
-
-      with util.connect_readonly(FILE) as conn:
+      with util.connect_readonly(os.path.join(self.path,
+                                              'places.sqlite')) as conn:
          cursor = conn.cursor()
          cursor.execute(r'''SELECT P.url, B.title, B.dateAdded, B.lastModified
                             FROM moz_bookmarks B
@@ -146,15 +152,40 @@ class FirefoxProfile(Profile):
          return [{
              'url': url,
              'title': title,
-             'date_added': date_from_epoch(date_added, 1000000),
-             'last_modified': date_from_epoch(last_modified, 1000000)
+             'date_added': date_from_epoch(date_added),
+             'last_modified': date_from_epoch(last_modified)
          } for url, title, date_added, last_modified in cursor.fetchall()]
 
    def get_autofill(self):
       raise NotImplementedError()
 
    def get_cookies(self):
-      raise NotImplementedError()
+      with util.connect_readonly(os.path.join(self.path,
+                                              'cookies.sqlite')) as conn:
+         cursor = conn.cursor()
+         cursor.execute(r'''SELECT
+                            baseDomain,
+                            name,
+                            path,
+                            value,
+                            expiry,
+                            creationTime,
+                            lastAccessed
+                            FROM moz_cookies
+                            ORDER BY lastAccessed DESC''')
+
+         # creationTime and lastAccessed is in microseconds since epoch
+         # while expiry is in seconds since epoch
+         return [{
+             'base-domain': base_domain,
+             'name': name,
+             'path': path,
+             'value': value,
+             'expiry': date_from_epoch(expiry),
+             'creation-time': date_from_epoch(creation_time),
+             'last-accessed': date_from_epoch(last_accessed),
+         } for base_domain, name, path, value, expiry, creation_time,
+                 last_accessed in cursor.fetchall()]
 
 
 class FirefoxBrowser(Browser):
