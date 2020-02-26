@@ -15,17 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# list that contains all supported browsers
-BROWSERS = []
+import os
+
+from extract_browser_data.browsers import register_browser
+from extract_browser_data.browsers.chromium.chromium import ChromiumBrowser
+from extract_browser_data.prelude import *
 
 
-def register_browser(browser):
-   '''Adds browser to the list of browsers'''
-   BROWSERS.append(browser)
+class EdgeBrowser(ChromiumBrowser):
+   '''Browser class for Edge browser that is based on Chromium'''
+   def get_browser_name(self):
+      return 'Edge (Chromium)'
+
+   def get_default_user_data_path(self):
+      # TODO i couldn't find it for other operating systems
+      path = '$LOCALAPPDATA/Microsoft/Edge/User Data/Default'
+
+      return os.path.expandvars(os.path.normpath(path))
 
 
-# these imports must be below both `register_browser` and `BROWSERS`
-import extract_browser_data.browsers.firefox
-import extract_browser_data.browsers.chromium.chromium
-import extract_browser_data.browsers.chromium.brave
-import extract_browser_data.browsers.chromium.edge
+if WIN32:
+   register_browser(EdgeBrowser())

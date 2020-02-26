@@ -20,6 +20,7 @@ import json
 import configparser
 
 from datetime import datetime
+from extract_browser_data.browsers import register_browser
 from extract_browser_data.browser import Profile, Browser
 from extract_browser_data.prelude import *
 
@@ -248,3 +249,6 @@ class FirefoxBrowser(Browser):
          path = '$HOME/Library/Application Support/Firefox'
 
       return os.path.expandvars(os.path.normpath(path))
+
+
+register_browser(FirefoxBrowser())
