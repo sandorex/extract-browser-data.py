@@ -19,6 +19,40 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 
+class Extension:
+   '''Base class for browser extension'''
+   def __init__(self, version, name, description, download_url, url,
+                install_date, last_update):
+      self.version = version
+      self.name = name
+      self.description = description
+      self.download_url = download_url
+      self.url = url
+      self.install_date = install_date
+      self.last_update = last_update
+
+   def get_version(self):
+      return self.version
+
+   def get_name(self):
+      return self.name
+
+   def get_description(self):
+      return self.description
+
+   def get_download_url(self):
+      return self.download_url
+
+   def get_url(self):
+      return self.url
+
+   def get_install_date(self):
+      return self.install_date
+
+   def get_last_update(self):
+      return self.last_update
+
+
 class Profile(ABC):
    """Base browser profile class
 
@@ -60,11 +94,6 @@ class Profile(ABC):
    @abstractmethod
    def get_bookmarks(self):
       '''Returns bookmarks'''
-      raise NotImplementedError()
-
-   @abstractmethod
-   def get_autofill(self):
-      '''Returns autofill data'''
       raise NotImplementedError()
 
    @abstractmethod

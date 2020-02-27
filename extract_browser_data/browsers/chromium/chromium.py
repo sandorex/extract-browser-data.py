@@ -41,10 +41,6 @@ class ChromiumProfile(Profile):
       '''Returns bookmarks'''
       raise NotImplementedError()
 
-   def get_autofill(self):
-      '''Returns autofill data'''
-      raise NotImplementedError()
-
    def get_cookies(self):
       '''Returns autofill data'''
       raise NotImplementedError()

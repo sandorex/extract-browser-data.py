@@ -16,12 +16,13 @@
 # limitations under the License.
 
 import os
+import re
 import json
 import configparser
 
 from datetime import datetime
 from extract_browser_data.browsers import register_browser
-from extract_browser_data.browser import Profile, Browser
+from extract_browser_data.browser import Extension, Profile, Browser
 from extract_browser_data.prelude import *
 
 
@@ -54,6 +55,65 @@ class FirefoxProfile(Profile):
 
       self.default = default
 
+   def get_user_account(self):
+      """Gets currently logged in account
+
+      Returns `None` if account is not logged in
+
+      TODO port to other browsers if possible
+
+      .. NOTICE::
+         This function is Firefox only!
+      """
+      FILE = os.path.join(self.path, 'signedInUser.json')
+
+      if not os.path.exists(FILE):
+         return None
+
+      with open(FILE) as file:
+         data = json.load(file)
+
+      schema_version = data['version']
+      if schema_version != 1:
+         raise util.UnsupportedSchema(FILE, schema_version)
+
+      data = data['accountData']['profileCache']['profile']
+
+      return {
+          'name': data['displayName'],
+          'email': data['email'],
+          'avatar': data['avatar']
+      }
+
+   def get_containers(self):
+      """Gets all public containers
+
+      Returns `None` if file doesn't exist
+
+      .. NOTICE::
+         This function is Firefox only!
+      """
+      FILE = os.path.join(self.path, 'containers.json')
+
+      with open(FILE) as file:
+         data = json.load(file)
+
+      schema_version = data['version']
+      if schema_version != 4:
+         raise util.UnsupportedSchema(FILE, schema_version)
+
+      containers = []
+      for container in data['identities']:
+         if container['public']:
+            containers.append({
+                'id': container['userContextId'],
+                'name': container['name'],
+                'icon': container['icon'],
+                'color': container['color']
+            })
+
+      return containers
+
    def is_default_profile(self):
       """Checks if the profile is gonna run by default
 
@@ -79,7 +139,6 @@ class FirefoxProfile(Profile):
       if schema_version != 31:
          raise util.UnsupportedSchema(FILE, schema_version)
 
-      extensions = []
       for extension in data['addons']:
          # skip themes and such
          if extension["type"] != "extension":
@@ -89,78 +148,85 @@ class FirefoxProfile(Profile):
          if extension["location"] != "app-profile":
             continue
 
-         data = {}
-         data['id'] = extension['id']
-         data['version'] = extension['version']
-         data['download-url'] = extension['sourceURI']
-
          # both installDate and updateDate are in milliseconds since epoch
-         data['install-date'] = date_from_epoch(extension['installDate'])
-         data['last-update'] = date_from_epoch(extension['updateDate'])
+         install_date = date_from_epoch(extension['installDate'])
+         last_update = date_from_epoch(extension['updateDate'])
 
          # mozilla.org redirects to the page of the addon when id is supplied
-         data[
-             'url'] = 'https://addons.mozilla.org/en-US/firefox/addon/{}/'.format(
-                 data['id'])
+         url = 'https://addons.mozilla.org/en-US/firefox/addon/{}/'.format(
+             extension['id'])
+
+         name = None
+         description = None
+         author = None
 
          # find english locale
          for locale in extension['locales']:
             if 'en' in locale['locales']:
-               data['name'] = locale['name']
-               data['description'] = locale['description']
-               data['creator'] = locale['creator']
+               name = locale.get('name')
+               description = locale.get('description')
+               author = locale.get('creator')
 
          # fallback
-         if 'name' not in data:
-            data['name'] = extension["defaultLocale"]['name']
-            data['description'] = extension["defaultLocale"]['description']
-            data['creator'] = extension["defaultLocale"]['creator']
+         if any(x is None for x in [name, description, author]):
+            name = extension["defaultLocale"]['name']
+            description = extension["defaultLocale"]['description']
+            author = extension["defaultLocale"]['creator']
 
-         # some extensions have newlines at the end
-         data['description'] = data['description'].strip()
-
-         extensions.append(data)
-
-      return extensions
+         yield Extension(extension['version'], name, description.strip(),
+                         extension['sourceURI'], url, install_date, last_update)
 
    def get_history(self):
       with util.connect_readonly(os.path.join(self.path,
                                               'places.sqlite')) as conn:
          cursor = conn.cursor()
          cursor.execute(r'''SELECT url, title, last_visit_date
-                            FROM moz_places ORDER BY last_visit_date DESC''')
+                            FROM moz_places
+                            WHERE last_visit_date IS NOT NULL
+                            ORDER BY last_visit_date DESC''')
 
+         # TODO make a class for website visit???
          # time is in microseconds since epoch
-         return [{
-             'url': url,
-             'title': title,
-             'last_visit': date_from_epoch(last_visit)
-         } for url, title, last_visit in cursor.fetchall()]
+         for url, title, last_visit in cursor.fetchall():
+            yield {
+                'url': url,
+                'title': title,
+                'last_visit': date_from_epoch(last_visit)
+            }
 
    def get_bookmarks(self):
       with util.connect_readonly(os.path.join(self.path,
                                               'places.sqlite')) as conn:
          cursor = conn.cursor()
-         cursor.execute(r'''SELECT P.url, B.title, B.dateAdded, B.lastModified
+         cursor.execute(r'''SELECT P.url,
+                                   B.id,
+                                   B.parent,
+                                   B.title,
+                                   B.dateAdded,
+                                   B.lastModified
                             FROM moz_bookmarks B
                             JOIN moz_places P
                             WHERE B.fk == P.id
                             ORDER BY B.lastModified DESC''')
 
          # TODO get the folder hiarcharchy
+         # TODO make Bookmark class
 
          # time is in microseconds since epoch
-         return [{
-             'url': url,
-             'title': title,
-             'date_added': date_from_epoch(date_added),
-             'last_modified': date_from_epoch(last_modified)
-         } for url, title, date_added, last_modified in cursor.fetchall()]
-
-   def get_autofill(self):
-      raise NotImplementedError()
+         for url, _id, parent, title, date_added, last_modified in cursor.fetchall(
+         ):
+            yield {
+                'url': url,
+                'id': _id,
+                'parent': parent,
+                'title': title,
+                'date_added': date_from_epoch(date_added),
+                'last_modified': date_from_epoch(last_modified)
+            }
 
    def get_cookies(self):
+      containers = self.get_containers()
+
       with util.connect_readonly(os.path.join(self.path,
                                               'cookies.sqlite')) as conn:
          cursor = conn.cursor()
@@ -169,6 +235,7 @@ class FirefoxProfile(Profile):
                             name,
                             path,
                             value,
+                            originAttributes,
                             expiry,
                             creationTime,
                             lastAccessed
@@ -177,16 +244,35 @@ class FirefoxProfile(Profile):
 
          # creationTime and lastAccessed is in microseconds since epoch
          # while expiry is in seconds since epoch
-         return [{
-             'base-domain': base_domain,
-             'name': name,
-             'path': path,
-             'value': value,
-             'expiry': date_from_epoch(expiry),
-             'creation-time': date_from_epoch(creation_time),
-             'last-accessed': date_from_epoch(last_accessed),
-         } for base_domain, name, path, value, expiry, creation_time,
-                 last_accessed in cursor.fetchall()]
+         for base_domain, name, path, value, attributes, expiry, creation_time, last_accessed in cursor.fetchall(
+         ):
+            container = None
+            if attributes:
+               # NOTE this is the best way i've thought of to ensure that
+               # attributes haven't changed..
+               match = re.match(r'^\^userContextId=(\d+)$', attributes)
+               if match is None:
+                  raise RuntimeError(
+                      f"invalid attributes found in cookie '{attributes}'")
+
+               container_id = int(match.group(1))
+               container = next(  # find the container by the id
+                   (x for x in containers if x['id'] == container_id), None)
+
+               if container is None:
+                  raise RuntimeError(
+                      f'invalid container id {container_id} in a cookie')
+
+            yield {
+                'base-domain': base_domain,
+                'name': name,
+                'path': path,
+                'value': value,
+                'container': container,
+                'expiry': date_from_epoch(expiry),
+                'creation-time': date_from_epoch(creation_time),
+                'last-accessed': date_from_epoch(last_accessed)
+            }
 
 
 class FirefoxBrowser(Browser):
@@ -245,7 +331,7 @@ class FirefoxBrowser(Browser):
          path = '$APPDATA/Mozilla/Firefox'
       elif LINUX:
          path = '$HOME/.mozilla/firefox'
-      elif MACOS:  # TODO may be wrong
+      elif MACOS:
          path = '$HOME/Library/Application Support/Firefox'
 
       return os.path.expandvars(os.path.normpath(path))
