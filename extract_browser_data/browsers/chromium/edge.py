@@ -29,7 +29,7 @@ class EdgeBrowser(ChromiumBrowser):
 
    def get_default_user_data_path(self):
       # TODO i couldn't find it for other operating systems
-      path = '$LOCALAPPDATA/Microsoft/Edge/User Data/Default'
+      path = '$LOCALAPPDATA/Microsoft/Edge/User Data'
 
       return os.path.expandvars(os.path.normpath(path))
 
