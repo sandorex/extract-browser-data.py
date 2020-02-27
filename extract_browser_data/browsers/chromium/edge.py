@@ -25,7 +25,7 @@ from extract_browser_data.prelude import *
 class EdgeBrowser(ChromiumBrowser):
    '''Browser class for Edge browser that is based on Chromium'''
    def get_browser_name(self):
-      return 'Edge (Chromium)'
+      return 'Edge'
 
    def get_default_user_data_path(self):
       # TODO i couldn't find it for other operating systems
