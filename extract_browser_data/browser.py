@@ -32,24 +32,31 @@ class Extension:
       self.last_update = last_update
 
    def get_version(self):
+      '''Get the version of the extension'''
       return self.version
 
    def get_name(self):
+      '''Get name of the extension'''
       return self.name
 
    def get_description(self):
+      '''Get the description of the extension'''
       return self.description
 
    def get_download_url(self):
+      '''Get an url to download the same version of extension'''
       return self.download_url
 
    def get_url(self):
+      '''Get an url to page of the extension (may not valid)'''
       return self.url
 
    def get_install_date(self):
+      '''Get the date on which the extension was installed'''
       return self.install_date
 
    def get_last_update(self):
+      '''Get the date on which the extension was last updated'''
       return self.last_update
 
    def __str__(self):
