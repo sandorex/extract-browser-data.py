@@ -24,10 +24,16 @@ class UnsupportedSchema(RuntimeError):
       self.file = file
       self.version = version
 
-      super().__init__("Unsupported schema version {} for file {}",
-                       self.version, self.file)
+      super().__init__("Unsupported schema version {} for file '{}'".format(
+          self.version, self.file))
 
 
 def connect_readonly(path):
    '''Opens a sqlite database readonly'''
    return sqlite3.connect('file:{}?mode=ro'.format(path), uri=True)
+
+
+def get_db_schema_version(connection):
+   cursor = connection.cursor()
+   cursor.execute('PRAGMA user_version')
+   return cursor.fetchone()[0]

@@ -102,17 +102,14 @@ class FirefoxProfile(Profile):
       if schema_version != 4:
          raise util.UnsupportedSchema(FILE, schema_version)
 
-      containers = []
       for container in data['identities']:
          if container['public']:
-            containers.append({
+            yield {
                 'id': container['userContextId'],
                 'name': container['name'],
                 'icon': container['icon'],
                 'color': container['color']
-            })
-
-      return containers
+            }
 
    def is_default_profile(self):
       """Checks if the profile is gonna run by default
@@ -177,8 +174,14 @@ class FirefoxProfile(Profile):
                          extension['sourceURI'], url, install_date, last_update)
 
    def get_history(self):
-      with util.connect_readonly(os.path.join(self.path,
-                                              'places.sqlite')) as conn:
+      FILE = os.path.join(self.path, 'places.sqlite')
+
+      with util.connect_readonly(FILE) as conn:
+         # check schema version
+         schema_version = util.get_db_schema_version(conn)
+         if schema_version != 53:
+            raise util.UnsupportedSchema(FILE, schema_version)
+
          cursor = conn.cursor()
          cursor.execute(r'''SELECT url, title, last_visit_date
                             FROM moz_places
@@ -195,8 +198,14 @@ class FirefoxProfile(Profile):
             }
 
    def get_bookmarks(self):
-      with util.connect_readonly(os.path.join(self.path,
-                                              'places.sqlite')) as conn:
+      FILE = os.path.join(self.path, 'places.sqlite')
+
+      with util.connect_readonly(FILE) as conn:
+         # check schema version
+         schema_version = util.get_db_schema_version(conn)
+         if schema_version != 53:
+            raise util.UnsupportedSchema(FILE, schema_version)
+
          cursor = conn.cursor()
          cursor.execute(r'''SELECT P.url,
                                    B.id,
@@ -225,10 +234,14 @@ class FirefoxProfile(Profile):
             }
 
    def get_cookies(self):
-      containers = self.get_containers()
+      FILE = os.path.join(self.path, 'cookies.sqlite')
 
-      with util.connect_readonly(os.path.join(self.path,
-                                              'cookies.sqlite')) as conn:
+      with util.connect_readonly(FILE) as conn:
+         # check schema version
+         schema_version = util.get_db_schema_version(conn)
+         if schema_version != 10:
+            raise util.UnsupportedSchema(FILE, schema_version)
+
          cursor = conn.cursor()
          cursor.execute(r'''SELECT
                             baseDomain,
@@ -241,6 +254,9 @@ class FirefoxProfile(Profile):
                             lastAccessed
                             FROM moz_cookies
                             ORDER BY lastAccessed DESC''')
+
+         # fetch containers
+         containers = self.get_containers()
 
          # creationTime and lastAccessed is in microseconds since epoch
          # while expiry is in seconds since epoch
