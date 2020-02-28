@@ -62,9 +62,6 @@ class Extension:
    def __str__(self):
       return "Extension '{}' Version {}".format(self.name, self.version)
 
-   def __repr__(self):
-      return str(vars(self))
-
 
 class Profile(ABC):
    """Base browser profile class
@@ -91,9 +88,6 @@ class Profile(ABC):
 
    def __str__(self):
       return "Profile {} at '{}'".format(self.name, self.path)
-
-   def __repr__(self):
-      return str(vars(self))
 
    @abstractmethod
    def is_profile_running(self):
@@ -149,9 +143,6 @@ class Browser(ABC):
    def __str__(self):
       return "Browser '{}' with data path '{}'".format(self.get_browser_name(),
                                                        str(self.user_data_path))
-
-   def __repr__(self):
-      return str(vars(self))
 
    @classmethod
    def new(cls, user_data_path=None):
