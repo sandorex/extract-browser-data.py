@@ -21,6 +21,8 @@ import re
 from ..prelude import *
 from ..reader import Reader
 from .util import date_from_epoch, open_lz4_file
+from .firefox_profile import (SESSIONSTORE, EXTENSIONS, PLACES, COOKIES,
+                              SIGNED_IN_USER, CONTAINERS)
 
 
 class FirefoxReader(Reader):
@@ -41,7 +43,27 @@ class FirefoxReader(Reader):
       .. NOTICE::
          This function is Firefox only!
       """
-      raise NotImplementedError()
+      FILE = join_path(self.profile.path, CONTAINERS)
+
+      if file_exists(FILE):
+         yield
+         return
+
+      with open(FILE) as file:
+         data = json.load(file)
+
+      schema_version = data['version']
+      if schema_version != 4:
+         raise util.UnsupportedSchema(FILE, schema_version)
+
+      for container in data['identities']:
+         if container['public']:
+            yield {
+                'id': container['userContextId'],  # TODO get container
+                'name': container['name'],
+                'icon': container['icon'],
+                'color': container['color']
+            }
 
    def last_session(self) -> t.Generator[t.Any, None, None]:
       """Gets last session
@@ -51,7 +73,7 @@ class FirefoxReader(Reader):
       .. NOTICE::
          This function is Firefox only!
       """
-      FILE = self.profile.path.joinpath('sessionstore.jsonlz4')
+      FILE = self.profile.path.joinpath(SESSIONSTORE)
 
       if not file_exists(FILE):
          yield
@@ -90,7 +112,7 @@ class FirefoxReader(Reader):
       .. NOTICE::
          This function is Firefox only!
       """
-      FILE = self.profile.path.joinpath('signedInUser.json')
+      FILE = self.profile.path.joinpath(SIGNED_IN_USER)
 
       if not file_exists(FILE):
          return None
@@ -112,7 +134,7 @@ class FirefoxReader(Reader):
 
    # READER #
    def extensions(self) -> t.Generator[t.Any, None, None]:
-      FILE = self.profile.path.joinpath('extensions.json')
+      FILE = self.profile.path.joinpath(EXTENSIONS)
 
       # NOTE utf8 encoding here is required
       with open(FILE, encoding='utf8') as f:
@@ -178,7 +200,7 @@ class FirefoxReader(Reader):
          }
 
    def history(self) -> t.Generator[t.Any, None, None]:
-      FILE = self.profile.path.joinpath('places.sqlite')
+      FILE = self.profile.path.joinpath(PLACES)
       db_places = self.open_database(FILE)
 
       # check schema version
@@ -202,7 +224,7 @@ class FirefoxReader(Reader):
          }
 
    def bookmarks(self) -> t.Generator[t.Any, None, None]:
-      FILE = self.profile.path.joinpath('places.sqlite')
+      FILE = self.profile.path.joinpath(PLACES)
       db_places = self.open_database(FILE)
 
       # check schema version
@@ -238,7 +260,7 @@ class FirefoxReader(Reader):
          }
 
    def cookies(self) -> t.Generator[t.Any, None, None]:
-      FILE = self.profile.path.joinpath('cookies.sqlite')
+      FILE = self.profile.path.joinpath(COOKIES)
       db_cookies = self.open_database(FILE)
 
       # check schema version

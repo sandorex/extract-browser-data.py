@@ -17,8 +17,17 @@
 
 from .chromium_reader import ChromiumReader
 from .chromium_writer import ChromiumWriter
+from .util import is_database_locked
 from ..profile import Profile
 from ..prelude import *
+
+PREFERENCES = 'Preferences'
+HISTORY = 'History'
+LOGIN_DATA = 'Login Data'
+WEB_DATA = 'Web Data'
+COOKIES = 'Cookies'
+SECURE_PREFERENCES = 'Secure Preferences'
+BOOKMARKS = 'Bookmarks'
 
 
 class ChromiumProfile(Profile):
@@ -26,9 +35,22 @@ class ChromiumProfile(Profile):
    def __init__(self, name: str, path: str):
       super().__init__(name, path, ChromiumReader, ChromiumWriter)
 
-   @staticmethod
-   def is_valid_profile(path: str) -> bool:
-      raise NotImplementedError()
+   @classmethod
+   def is_valid_profile(cls, path: str) -> bool:
+      # checking if any of the files does not exist
+      # TODO untested!
+      for i in [
+          PREFERENCES, HISTORY, LOGIN_DATA, WEB_DATA, COOKIES,
+          SECURE_PREFERENCES, BOOKMARKS
+      ]:
+         if not file_exists(join_path(path, i)):
+            return False
+
+      return True
 
    def is_profile_running(self) -> bool:
-      raise NotImplementedError()
+      # chromium locks databases when it's running, so i am using that
+      # TODO untested!
+      return any(
+          is_database_locked(util.open_database(self.path.joinpath(i)))
+          for i in [LOGIN_DATA, WEB_DATA, COOKIES])

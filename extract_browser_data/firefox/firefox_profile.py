@@ -20,6 +20,14 @@ from .firefox_writer import FirefoxWriter
 from ..profile import Profile
 from ..prelude import *
 
+PROFILES = 'profiles.ini'
+SESSIONSTORE = 'sessionstore.jsonlz4'
+EXTENSIONS = 'extensions.json'
+PLACES = 'places.sqlite'
+COOKIES = 'cookies.sqlite'
+SIGNED_IN_USER = 'signedInUser.json'
+CONTAINERS = 'containers.json'
+
 
 class FirefoxProfile(Profile):
    """Profile for Firefox-based browsers"""
@@ -31,11 +39,10 @@ class FirefoxProfile(Profile):
    @staticmethod
    def is_valid_profile(path: str) -> bool:
       # checking if any of the files does not exist
-      return not any(
-          not file_exists(join_path(path, i))
-          for i in ['places.sqlite', 'cookies.sqlite', 'extensions.json'])
+      return not any(not file_exists(join_path(path, i))
+                     for i in [PLACES, COOKIES, EXTENSIONS])
 
    def is_profile_running(self) -> bool:
       # firefox deletes 'sessionstore.jsonlz4' when it starts and it's created
       # again when it quits, so i am using it as a lockfile
-      return not self.path.joinpath('sessionstore.jsonlz4').is_file()
+      return not self.path.joinpath(SESSIONSTORE).is_file()
