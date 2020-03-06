@@ -14,12 +14,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''This module is for internal use only'''
 
-import typing as t
+from ..prelude import *
+from ..reader import Reader
 
-from sys import platform as PLATFORM
-from pathlib import Path
-from os.path import join as join_path, isfile as file_exists
-from abc import ABC, abstractmethod
-from . import util
+
+class ChromiumReader(Reader):
+   '''Profile reader for Chromium-based browsers'''
+   def extensions(self) -> t.Generator[t.Any, None, None]:
+      raise NotImplementedError()
+
+   def history(self) -> t.Generator[t.Any, None, None]:
+      raise NotImplementedError()
+
+   def bookmarks(self) -> t.Generator[t.Any, None, None]:
+      raise NotImplementedError()
+
+   def cookies(self) -> t.Generator[t.Any, None, None]:
+      raise NotImplementedError()

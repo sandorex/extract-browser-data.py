@@ -17,23 +17,37 @@
 
 import sqlite3
 
+# TODO typing!!
+
 
 class UnsupportedSchema(RuntimeError):
-   '''Error that is caused when trying to read data from an unsupported schema version'''
-   def __init__(self, file, version):
+   '''Error that is caused when trying to read data from an unsupported schema
+   version'''
+   def __init__(self, file, version, *xpath):
       self.file = file
       self.version = version
+      self.xpath = '/' + '/'.join(xpath)
 
-      super().__init__("Unsupported schema version {} for file '{}'".format(
-          self.version, self.file))
+      if xpath is None:
+         msg = "Unsupported schema version {} for file '{}'".format(
+             self.version, self.file)
+      else:
+         msg = "Unsupported schema version {} in file '{}' at xpath '{}'".format(
+             self.version, self.file, self.xpath)
+
+      super().__init__(msg)
 
 
-def connect_readonly(path):
-   '''Opens a sqlite database readonly'''
-   return sqlite3.connect('file:{}?mode=ro'.format(path), uri=True)
-
-
-def get_db_schema_version(connection):
-   cursor = connection.cursor()
+def get_database_version(conn):
+   '''Returns ``PRAGMA user_version`` from a sqlite database'''
+   cursor = conn.cursor()
    cursor.execute('PRAGMA user_version')
    return cursor.fetchone()[0]
+
+
+def open_database(path: str, readonly: bool = False) -> sqlite3.Connection:
+   """Opens a sqlite database"""
+   if readonly:
+      return sqlite3.connect('file:{}?mode=ro'.format(path), uri=True)
+
+   return sqlite3.connect(path)

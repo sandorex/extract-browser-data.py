@@ -14,12 +14,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''This module is for internal use only'''
 
-import typing as t
+from ..prelude import *
+from ..writer import Writer
 
-from sys import platform as PLATFORM
-from pathlib import Path
-from os.path import join as join_path, isfile as file_exists
-from abc import ABC, abstractmethod
-from . import util
+
+class FirefoxWriter(Writer):
+   """Profile writer for Firefox-based browsers"""
+   @abstractmethod
+   def open(self):
+      raise NotImplementedError()
+
+   @abstractmethod
+   def close(self):
+      raise NotImplementedError()
+
+   @abstractmethod
+   def write_history(self, history: t.Any, append: bool = False):
+      raise NotImplementedError()
+
+   @abstractmethod
+   def write_bookmarks(self, bookmarks: t.Any, append: bool = False):
+      raise NotImplementedError()
+
+   @abstractmethod
+   def write_cookies(self, cookies: t.Any, append: bool = False):
+      raise NotImplementedError()

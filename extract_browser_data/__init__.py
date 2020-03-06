@@ -17,4 +17,9 @@
 
 VERSION = '0.1'
 
-import extract_browser_data.browsers
+from . import profile
+from . import reader
+from . import writer
+
+from .firefox import FirefoxProfile
+from .chromium import ChromiumProfile

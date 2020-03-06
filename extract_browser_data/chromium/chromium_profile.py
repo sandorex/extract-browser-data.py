@@ -15,17 +15,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# list that contains all supported browsers
-BROWSERS = []
+from .chromium_reader import ChromiumReader
+from .chromium_writer import ChromiumWriter
+from ..profile import Profile
+from ..prelude import *
 
 
-def register_browser(browser):
-   '''Adds browser to the list of browsers'''
-   BROWSERS.append(browser)
+class ChromiumProfile(Profile):
+   """Profile for Chromium-based browsers"""
+   def __init__(self, name: str, path: str):
+      super().__init__(name, path, ChromiumReader, ChromiumWriter)
 
+   @staticmethod
+   def is_valid_profile(path: str) -> bool:
+      raise NotImplementedError()
 
-# these imports must be below both `register_browser` and `BROWSERS`
-import extract_browser_data.browsers.firefox
-import extract_browser_data.browsers.chromium.chromium
-import extract_browser_data.browsers.chromium.brave
-import extract_browser_data.browsers.chromium.edge
+   def is_profile_running(self) -> bool:
+      raise NotImplementedError()

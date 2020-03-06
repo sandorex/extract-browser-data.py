@@ -15,24 +15,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
-from extract_browser_data.browsers import register_browser
-from extract_browser_data.browsers.chromium.chromium import ChromiumBrowser
-from extract_browser_data.prelude import *
+from ..prelude import *
+from ..writer import Writer
 
 
-class EdgeBrowser(ChromiumBrowser):
-   '''Browser class for Edge browser that is based on Chromium'''
-   def get_browser_name(self):
-      return 'Edge'
+class ChromiumWriter(Writer):
+   """Profile writer for Chromium-based browsers"""
+   @abstractmethod
+   def open(self):
+      raise NotImplementedError()
 
-   def get_default_user_data_path(self):
-      # TODO i couldn't find it for other operating systems
-      path = '$LOCALAPPDATA/Microsoft/Edge/User Data'
+   @abstractmethod
+   def close(self):
+      raise NotImplementedError()
 
-      return os.path.expandvars(os.path.normpath(path))
+   @abstractmethod
+   def write_history(self, history: t.Any, append: bool = False):
+      raise NotImplementedError()
 
+   @abstractmethod
+   def write_bookmarks(self, bookmarks: t.Any, append: bool = False):
+      raise NotImplementedError()
 
-if WIN32:
-   register_browser(EdgeBrowser())
+   @abstractmethod
+   def write_cookies(self, cookies: t.Any, append: bool = False):
+      raise NotImplementedError()
