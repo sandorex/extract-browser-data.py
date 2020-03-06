@@ -17,9 +17,16 @@
 
 import sys
 
+from .browsers import get_browsers
+
 
 def main(args=sys.argv):
-   print('main')
+   print('profiles found:')
+   for browser in get_browsers():
+      b = browser()
+      print(' ' * 2, b.get_browser_name())
+      for profile in b.get_profiles():
+         print(' ' * 4, "'{}' at '{}'".format(profile.name, profile.path))
 
 
 def main_chromium(args=sys.argv):
