@@ -15,34 +15,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .prelude import *
+from abc import ABC, abstractmethod
+from pathlib import Path
 
 
 class Profile(ABC):
    """Base browser profile class"""
-   def __init__(self, name: str, path: str, reader_type: t.Type,
-                writer_type: t.Type):
+   def __init__(self, name, path, reader_type, writer_type):
       self.name = name
       self.path = Path(path)
       self.reader_type = reader_type
       self.writer_type = writer_type
 
-   def reader(self, *args, **kwargs) -> t.Type:
+   def reader(self, *args, **kwargs):
       '''Tries to create a reader for the profile'''
       return self.reader_type(self, *args, **kwargs)
 
-   def writer(self, *args, **kwargs) -> t.Type:
+   def writer(self, *args, **kwargs):
       '''Tries to create a writer for the profile'''
       return self.writer_type(self, *args, **kwargs)
 
    # ABSTRACT #
    @staticmethod
    @abstractmethod
-   def is_valid_profile(path: str) -> bool:
+   def is_valid_profile(path):
       '''Checks if profile exists at path'''
       raise NotImplementedError()
 
    @abstractmethod
-   def is_profile_running(self) -> bool:
+   def is_profile_running(self):
       '''Checks if a browser instance is running while using this profile'''
       raise NotImplementedError()

@@ -18,9 +18,10 @@
 import os
 import configparser
 
+from os.path import isfile as file_exists
 from ...firefox import FirefoxProfile
 from .browser import Browser
-from .prelude import *
+from ... import util
 
 
 class FirefoxBrowser(Browser):
@@ -29,16 +30,14 @@ class FirefoxBrowser(Browser):
 
    @classmethod
    def get_default_user_path(cls):
-      if WIN32:
-         return '$APPDATA/Mozilla/Firefox'
-
-      if LINUX:
-         return '$HOME/.mozilla/firefox'
-
-      if MACOS:
-         return '$HOME/Library/Application Support/Firefox'
-
-      return None
+      return [
+          # WIN32
+          '$APPDATA/Mozilla/Firefox',
+          # LINUX
+          '$HOME/.mozilla/firefox',
+          # MACOS
+          '$HOME/Library/Application Support/Firefox'
+      ]
 
    @classmethod
    def get_browser_name(cls):

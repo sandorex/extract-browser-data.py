@@ -16,7 +16,6 @@
 # limitations under the License.
 
 from ..chromium import ChromiumBrowser
-from ..prelude import *
 
 
 class BraveBrowser(ChromiumBrowser):
@@ -27,11 +26,11 @@ class BraveBrowser(ChromiumBrowser):
 
    @classmethod
    def get_default_user_path(cls):
-      if WIN32:
-         return '$LOCALAPPDATA/BraveSoftware/Brave-Browser/User Data'
-
-      if LINUX:
-         return '$HOME/.config/BraveSoftware'
-
-      if MACOS:
-         return '$HOME/Library/Application Support/BraveSoftware'
+      return [
+          # WIN32
+          '$LOCALAPPDATA/BraveSoftware/Brave-Browser/User Data',
+          # LINUX
+          '$HOME/.config/BraveSoftware',
+          # MACOS
+          '$HOME/Library/Application Support/BraveSoftware'
+      ]

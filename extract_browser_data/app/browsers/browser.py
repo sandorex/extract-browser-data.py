@@ -15,17 +15,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
 from os.path import expandvars, normpath
-from ...prelude import *
+from abc import ABC, abstractmethod
+from sys import platform
+
+WIN32 = bool(platform in ['win32', 'cygwin'])
+LINUX = bool(platform == 'linux')
+MACOS = bool(platform == 'darwin')
 
 
 class Browser(ABC):
    """Base browser class"""
-   PROFILE_TYPE: t.ClassVar[t.Type] = None
+   PROFILE_TYPE = None
 
-   def __init__(self, data_path: t.Optional[str] = None):
+   def __init__(self, data_path=None):
       if data_path is None:
-         self.data_path = expandvars(normpath(self.get_default_user_path()))
+         path = self.get_default_user_path()
+
+         if WIN32:
+            path = path[0]
+         elif LINUX:
+            path = path[1]
+         elif MACOS:
+            path = path[2]
+
+         self.data_path = expandvars(normpath(path))
       else:
          self.data_path = data_path
 

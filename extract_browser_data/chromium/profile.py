@@ -15,19 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .chromium_reader import ChromiumReader
-from .chromium_writer import ChromiumWriter
-from .util import is_database_locked
+from os.path import join as join_path, isfile as file_exists
+from .. import util
 from ..profile import Profile
-from ..prelude import *
-
-PREFERENCES = 'Preferences'
-HISTORY = 'History'
-LOGIN_DATA = 'Login Data'
-WEB_DATA = 'Web Data'
-COOKIES = 'Cookies'
-SECURE_PREFERENCES = 'Secure Preferences'
-BOOKMARKS = 'Bookmarks'
+from .reader import ChromiumReader
+from .writer import ChromiumWriter
+from .files import (PREFERENCES, HISTORY, LOGIN_DATA, WEB_DATA, COOKIES,
+                    SECURE_PREFERENCES, BOOKMARKS)
 
 
 class ChromiumProfile(Profile):
@@ -51,6 +45,9 @@ class ChromiumProfile(Profile):
    def is_profile_running(self) -> bool:
       # chromium locks databases when it's running, so i am using that
       # TODO untested!
-      return any(
-          is_database_locked(util.open_database(self.path.joinpath(i)))
-          for i in [LOGIN_DATA, WEB_DATA, COOKIES])
+      for file in [LOGIN_DATA, WEB_DATA, COOKIES]:
+         if util.is_database_locked(util.open_database(
+             self.path.joinpath(file))):
+            return True
+
+      return False

@@ -18,16 +18,17 @@
 import json
 import re
 
-from ..prelude import *
+from os.path import join as join_path, isfile as file_exists
+from .. import util
 from ..reader import Reader
-from .util import date_from_epoch, open_lz4_file
-from .firefox_profile import (SESSIONSTORE, EXTENSIONS, PLACES, COOKIES,
-                              SIGNED_IN_USER, CONTAINERS)
+from .util import open_lz4_file
+from .files import (SESSIONSTORE, EXTENSIONS, PLACES, COOKIES, SIGNED_IN_USER,
+                    CONTAINERS)
 
 
 class FirefoxReader(Reader):
    '''Profile reader for Firefox-based browsers'''
-   def _find_container(self, context_id) -> t.Optional[t.Any]:
+   def _find_container(self, context_id):
       '''Finds container by the context id (returns context_id if it cannot be
       found)'''
       for container in self.containers():
@@ -37,7 +38,7 @@ class FirefoxReader(Reader):
       return context_id
 
    # FIREFOX READER #
-   def containers(self) -> t.Generator[t.Any, None, None]:
+   def containers(self):
       """Returns firefox containers
 
       .. NOTICE::
@@ -59,13 +60,14 @@ class FirefoxReader(Reader):
       for container in data['identities']:
          if container['public']:
             yield {
-                'id': container['userContextId'],  # TODO get container
+                'id': self._find_container(
+                    container['userContextId']),  # TODO get container
                 'name': container['name'],
                 'icon': container['icon'],
                 'color': container['color']
             }
 
-   def last_session(self) -> t.Generator[t.Any, None, None]:
+   def last_session(self):
       """Gets last session
 
       Yields nothing if firefox is running
@@ -96,18 +98,16 @@ class FirefoxReader(Reader):
                 'index': tab['index'],
                 'title': current_entry['title'],
                 'url': current_entry['url'],
-                'container': self._find_container(
-                    tab['userContextId']
-                ),  # TODO move container find logic to a function and add it here
+                'container': self._find_container(tab['userContextId']),
                 'last-accessed': tab['lastAccessed']
             })
 
          yield tabs
 
-   def account(self) -> t.Dict[str, str]:
+   def account(self):
       """Gets currently logged in account
 
-      Returns `None` if account is not logged in
+      Returns ``None`` if account is not logged in
 
       .. NOTICE::
          This function is Firefox only!
@@ -133,7 +133,7 @@ class FirefoxReader(Reader):
       }
 
    # READER #
-   def extensions(self) -> t.Generator[t.Any, None, None]:
+   def extensions(self):
       FILE = self.profile.path.joinpath(EXTENSIONS)
 
       # NOTE utf8 encoding here is required
@@ -155,9 +155,10 @@ class FirefoxReader(Reader):
             continue
 
          # both installDate and updateDate are in milliseconds since epoch
-         install_date = date_from_epoch(extension['installDate'],
-                                        'milliseconds')
-         last_update = date_from_epoch(extension['updateDate'], 'milliseconds')
+         install_date = util.datetime_from_epoch(extension['installDate'],
+                                                 'milliseconds')
+         last_update = util.datetime_from_epoch(extension['updateDate'],
+                                                'milliseconds')
 
          _id = extension['id']
 
@@ -199,110 +200,122 @@ class FirefoxReader(Reader):
              }
          }
 
-   def history(self) -> t.Generator[t.Any, None, None]:
+   def history(self):
       FILE = self.profile.path.joinpath(PLACES)
-      db_places = self.open_database(FILE)
+      db_places, db_version = self.open_database(FILE)
 
-      # check schema version
-      schema_version = util.get_database_version(db_places)
-      if schema_version != 53:
-         raise util.UnsupportedSchema(FILE, schema_version)
+      if db_version != 53:
+         raise util.UnsupportedSchema(FILE, db_version)
 
-      # TODO get contextId
-      cursor = db_places.cursor()
-      cursor.execute(r'''SELECT url, title, last_visit_date
-                           FROM moz_places
-                           WHERE last_visit_date IS NOT NULL
-                           ORDER BY last_visit_date DESC''')
+      with db_places:
+         # TODO get contextId
+         cursor = db_places.cursor()
+         cursor.execute(r'''SELECT url, title, last_visit_date
+                              FROM moz_places
+                              WHERE last_visit_date IS NOT NULL
+                              ORDER BY last_visit_date DESC''')
 
-      for url, title, last_visit in cursor.fetchall():
-         yield {
-             'url': url,
-             'title': title,
-             # time is in microseconds since epoch
-             'last_visit': date_from_epoch(last_visit, 'microseconds')
-         }
+         for url, title, last_visit in cursor.fetchall():
+            yield {
+                'url': url,
+                'title': title,
+                # time is in microseconds since epoch
+                'last_visit': util.datetime_from_epoch(last_visit,
+                                                       'microseconds')
+            }
 
-   def bookmarks(self) -> t.Generator[t.Any, None, None]:
+   def bookmarks(self):
       FILE = self.profile.path.joinpath(PLACES)
-      db_places = self.open_database(FILE)
+      db_places, db_version = self.open_database(FILE)
 
-      # check schema version
-      schema_version = util.get_database_version(db_places)
-      if schema_version != 53:
-         raise util.UnsupportedSchema(FILE, schema_version)
+      if db_version != 53:
+         raise util.UnsupportedSchema(FILE, db_version)
 
-      cursor = db_places.cursor()
-      cursor.execute(r'''SELECT P.url,
-                                 B.id,
-                                 B.parent,
-                                 B.title,
-                                 B.dateAdded,
-                                 B.lastModified
-                           FROM moz_bookmarks B
-                           JOIN moz_places P
-                           WHERE B.fk == P.id
-                           ORDER BY B.lastModified DESC''')
+      with db_places:
+         cursor = db_places.cursor()
+         cursor.execute(r'''SELECT P.url,
+                                    B.id,
+                                    B.parent,
+                                    B.title,
+                                    B.dateAdded,
+                                    B.lastModified
+                              FROM moz_bookmarks B
+                              JOIN moz_places P
+                              WHERE B.fk == P.id
+                              ORDER BY B.lastModified DESC''')
 
-      # TODO get the folder hiarcharchy
-      # TODO make Bookmark class
+         # TODO get the folder hiarcharchy
+         # TODO make Bookmark class
 
-      for url, _id, parent, title, date_added, last_modified in cursor.fetchall(
-      ):
-         yield {
-             'url': url,
-             'id': _id,
-             'parent': parent,
-             'title': title,
-             # time is in microseconds since epoch
-             'date_added': date_from_epoch(date_added, 'microseconds'),
-             'last_modified': date_from_epoch(last_modified, 'microseconds')
-         }
+         for url, _id, parent, title, date_added, last_modified in cursor.fetchall(
+         ):
+            yield {
+                'url':
+                url,
+                'id':
+                _id,
+                'parent':
+                parent,
+                'title':
+                title,
+                # time is in microseconds since epoch
+                'date_added':
+                util.datetime_from_epoch(date_added, 'microseconds'),
+                'last_modified':
+                util.datetime_from_epoch(last_modified, 'microseconds')
+            }
 
-   def cookies(self) -> t.Generator[t.Any, None, None]:
+   def cookies(self):
       FILE = self.profile.path.joinpath(COOKIES)
-      db_cookies = self.open_database(FILE)
+      db_cookies, db_version = self.open_database(FILE)
 
-      # check schema version
-      schema_version = util.get_database_version(db_cookies)
-      if schema_version != 10:
-         raise util.UnsupportedSchema(FILE, schema_version)
+      if db_version != 10:
+         raise util.UnsupportedSchema(FILE, db_version)
 
-      cursor = db_cookies.cursor()
-      cursor.execute(r'''SELECT
-                           baseDomain,
-                           name,
-                           path,
-                           value,
-                           originAttributes,
-                           expiry,
-                           creationTime,
-                           lastAccessed
-                           FROM moz_cookies
-                           ORDER BY lastAccessed DESC''')
+      with db_cookies:
+         cursor = db_cookies.cursor()
+         cursor.execute(r'''SELECT
+                              baseDomain,
+                              name,
+                              path,
+                              value,
+                              originAttributes,
+                              expiry,
+                              creationTime,
+                              lastAccessed
+                              FROM moz_cookies
+                              ORDER BY lastAccessed DESC''')
 
-      for base_domain, name, path, value, attributes, expiry, creation_time, last_accessed in cursor.fetchall(
-      ):
-         container = None
-         if attributes:
-            # NOTE this is the best way i've thought of to ensure that
-            # attributes haven't changed..
-            match = re.match(r'^\^userContextId=(\d+)$', attributes)
-            if match is None:
-               raise RuntimeError(
-                   f"invalid attributes found in cookie '{attributes}'")
+         for base_domain, name, path, value, attributes, expiry, creation_time, last_accessed in cursor.fetchall(
+         ):
+            container = None
+            if attributes:
+               # NOTE this is the best way i've thought of to ensure that
+               # attributes haven't changed..
+               match = re.match(r'^\^userContextId=(\d+)$', attributes)
+               if match is None:
+                  raise RuntimeError(
+                      f"invalid attributes found in cookie '{attributes}'")
 
-            container = self._find_container(int(match.group(1)))
+               container = self._find_container(int(match.group(1)))
 
-         yield {
-             'base-domain': base_domain,
-             'name': name,
-             'path': path,
-             'value': value,
-             'container': container,
-             # time is in seconds since epoch
-             'expiry': date_from_epoch(expiry),
-             # both creationTime and lastAccessed are in microseconds since epoch
-             'creation-time': date_from_epoch(creation_time, 'microseconds'),
-             'last-accessed': date_from_epoch(last_accessed, 'microseconds')
-         }
+            yield {
+                'base-domain':
+                base_domain,
+                'name':
+                name,
+                'path':
+                path,
+                'value':
+                value,
+                'container':
+                container,
+                # time is in seconds since epoch
+                'expiry':
+                util.datetime_from_epoch(expiry),
+                # both creationTime and lastAccessed are in microseconds since epoch
+                'creation-time':
+                util.datetime_from_epoch(creation_time, 'microseconds'),
+                'last-accessed':
+                util.datetime_from_epoch(last_accessed, 'microseconds')
+            }

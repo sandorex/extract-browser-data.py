@@ -15,12 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..prelude import *
+from abc import abstractmethod
 from ..writer import Writer
 
 
-class FirefoxWriter(Writer):
-   """Profile writer for Firefox-based browsers"""
+class ChromiumWriter(Writer):
+   """Profile writer for Chromium-based browsers"""
    @abstractmethod
    def open(self):
       raise NotImplementedError()
@@ -30,13 +30,13 @@ class FirefoxWriter(Writer):
       raise NotImplementedError()
 
    @abstractmethod
-   def write_history(self, history: t.Any, append: bool = False):
+   def write_history(self, history, append=False):
       raise NotImplementedError()
 
    @abstractmethod
-   def write_bookmarks(self, bookmarks: t.Any, append: bool = False):
+   def write_bookmarks(self, bookmarks, append=False):
       raise NotImplementedError()
 
    @abstractmethod
-   def write_cookies(self, cookies: t.Any, append: bool = False):
+   def write_cookies(self, cookies, append=False):
       raise NotImplementedError()

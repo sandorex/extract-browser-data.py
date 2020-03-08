@@ -20,7 +20,6 @@ import json
 
 from ...chromium import ChromiumProfile
 from .browser import Browser
-from .prelude import *
 
 
 class ChromiumBrowser(Browser):
@@ -29,23 +28,21 @@ class ChromiumBrowser(Browser):
 
    @classmethod
    def get_default_user_path(cls):
-      if WIN32:
-         return '$LOCALAPPDATA/Chromium/User Data'
-
-      if LINUX:
-         return '$HOME/.config/chromium'
-
-      if MACOS:
-         return '$HOME/Library/Application Support/Chromium'
-
-      return None
+      return [
+          # WIN32
+          '$LOCALAPPDATA/Chromium/User Data',
+          # LINUX
+          '$HOME/.config/chromium',
+          # MACOS
+          '$HOME/Library/Application Support/Chromium'
+      ]
 
    @classmethod
    def get_browser_name(cls):
       return 'Chromium'
 
    def get_profiles(self):
-      if not os.path.exists(self.data_path):
+      if not os.path.isdir(self.data_path):
          return []
 
       profiles = []

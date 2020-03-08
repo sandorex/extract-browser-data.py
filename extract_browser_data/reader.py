@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sqlite3 import Connection
-from .prelude import *
+from abc import ABC, abstractmethod
 from .profile import Profile
+from . import util
 
 
 class Reader(ABC):
@@ -25,28 +25,29 @@ class Reader(ABC):
    def __init__(self, profile: Profile):
       self.profile = profile
 
-   def open_database(self, *path) -> Connection:
-      '''Opens a database'''
+   def open_database(self, *path):
+      '''Opens a database readonly'''
       return util.open_database(self.profile.path.joinpaths(*path),
-                                readonly=True)
+                                readonly=True,
+                                copy_if_locked=True)
 
    # ABSTRACT #
    @abstractmethod
-   def extensions(self) -> t.Generator[t.Any, None, None]:
+   def extensions(self):
       '''Returns extensions installed by user'''
       raise NotImplementedError()
 
    @abstractmethod
-   def history(self) -> t.Generator[t.Any, None, None]:
+   def history(self):
       '''Returns browsing history'''
       raise NotImplementedError()
 
    @abstractmethod
-   def bookmarks(self) -> t.Generator[t.Any, None, None]:
+   def bookmarks(self):
       '''Returns bookmarks'''
       raise NotImplementedError()
 
    @abstractmethod
-   def cookies(self) -> t.Generator[t.Any, None, None]:
+   def cookies(self):
       '''Returns cookies'''
       raise NotImplementedError()

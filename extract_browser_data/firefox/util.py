@@ -16,7 +16,6 @@
 # limitations under the License.
 
 from io import BytesIO
-import datetime
 from lz4.block import decompress
 
 
@@ -35,14 +34,3 @@ def open_lz4_file(file):
       data = fp.read()
 
    return BytesIO(decompress(data))
-
-
-def date_from_epoch(epoch, unit='seconds'):
-   """Converts epoch to datetime
-
-   If `epoch` is `None`
-   """
-   if epoch is None:
-      return epoch
-
-   return datetime.datetime(1970, 1, 1) + datetime.timedelta(**{unit: epoch})

@@ -15,13 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sqlite3 import Connection
-
-from .prelude import *
+from abc import ABC, abstractmethod
+from . import util
 from .profile import Profile
-
-# TODO class for history field
-# TODO class for bookmark
 
 
 class Writer(ABC):
@@ -34,21 +30,18 @@ class Writer(ABC):
    def __init__(self, profile: Profile):
       self.profile = profile
 
-      self.open()
+      self._open()
 
    def __exit__(self, *args):
       self.close()
 
-   def open_database(self, *path) -> Connection:
+   def open_database(self, *path):
       '''Opens a database and locks it'''
-      conn = util.open_database(self.profile.path.joinpaths(*path))
-      conn.execute('BEGIN EXCLUSIVE')
-
-      return conn
+      return util.open_database(self.profile.path.joinpaths(*path), lock=True)
 
    # ABSTRACT #
    @abstractmethod
-   def open(self):
+   def _open(self):
       '''Opens the writer (called by the constructor)'''
       raise NotImplementedError()
 
@@ -58,16 +51,16 @@ class Writer(ABC):
       raise NotImplementedError()
 
    @abstractmethod
-   def write_history(self, history: t.Any, append: bool = False):
+   def write_history(self, history, append=False):
       '''Writes to history'''
       raise NotImplementedError()
 
    @abstractmethod
-   def write_bookmarks(self, bookmarks: t.Any, append: bool = False):
+   def write_bookmarks(self, bookmarks, append=False):
       '''Writes to bookmarks'''
       raise NotImplementedError()
 
    @abstractmethod
-   def write_cookies(self, cookies: t.Any, append: bool = False):
+   def write_cookies(self, cookies, append=False):
       '''Writes to cookies'''
       raise NotImplementedError()

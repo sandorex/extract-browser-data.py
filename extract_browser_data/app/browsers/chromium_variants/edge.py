@@ -16,7 +16,6 @@
 # limitations under the License.
 
 from ..chromium import ChromiumBrowser
-from ..prelude import *
 
 
 class EdgeBrowser(ChromiumBrowser):
@@ -28,4 +27,4 @@ class EdgeBrowser(ChromiumBrowser):
    @classmethod
    def get_default_user_path(self):
       # TODO i couldn't find the path for other operating systems
-      return '$LOCALAPPDATA/Microsoft/Edge/User Data'
+      return ['$LOCALAPPDATA/Microsoft/Edge/User Data']

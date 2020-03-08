@@ -1,7 +1,8 @@
 '''Contains variants of chromium browser'''
 
-from .. import prelude
+from .. import browser
+
 from .brave import BraveBrowser
 
-if prelude.WIN32:
+if browser.WIN32:
    from .edge import EdgeBrowser
