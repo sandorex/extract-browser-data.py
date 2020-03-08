@@ -21,16 +21,13 @@ from .profile import Profile
 
 
 class Writer(ABC):
-   """Base class for browser profile writer
-
-   .. NOTICE::
-      Opening the files/databases should happend in ``open`` while closing
-      should be implemented in ``close``
-   """
+   """Base class for browser profile writer"""
    def __init__(self, profile: Profile):
       self.profile = profile
 
+   def __enter__(self):
       self._open()
+      return self
 
    def __exit__(self, *args):
       self.close()
@@ -42,7 +39,7 @@ class Writer(ABC):
    # ABSTRACT #
    @abstractmethod
    def _open(self):
-      '''Opens the writer (called by the constructor)'''
+      '''Opens the writer'''
       raise NotImplementedError()
 
    @abstractmethod
