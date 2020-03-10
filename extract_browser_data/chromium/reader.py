@@ -18,10 +18,10 @@
 import json
 
 from ..reader import Reader
-from ..common import Extension, URLVisit, Bookmark
+from ..common import Extension, URLVisit, Bookmark, Cookie
 from .. import util
 from .util import dt_from_webkit_epoch
-from .files import (HISTORY, SECURE_PREFERENCES, BOOKMARKS)
+from .files import (HISTORY, SECURE_PREFERENCES, BOOKMARKS, COOKIES)
 
 
 class ChromiumReader(Reader):
@@ -76,7 +76,7 @@ class ChromiumReader(Reader):
       db_version, db_lsv = util.read_database_version(db_history, use_meta=True)
 
       if db_lsv > 42:
-         raise util.UnsupportedSchema(FILE, db_version)
+         raise util.UnsupportedSchema(FILE, (db_version, db_lsv))
 
       with db_history:
          cursor = db_history.cursor()
@@ -126,4 +126,33 @@ class ChromiumReader(Reader):
       return Bookmark.new_folder('root', 0, [toolbar, other, synced])
 
    def cookies(self):
-      raise NotImplementedError()
+      FILE = self.profile.path.joinpath(COOKIES)
+      db_history = self.open_database(FILE)
+      db_version, db_lsv = util.read_database_version(db_history, use_meta=True)
+
+      if db_lsv > 12:
+         raise util.UnsupportedSchema(FILE, (db_version, db_lsv))
+
+      with db_history:
+         cursor = db_history.cursor()
+         cursor.execute(r'''SELECT name,
+                                   host_key,
+                                   value,
+                                   path,
+                                   expires_utc,
+                                   creation_utc,
+                                   last_access_utc
+                            FROM cookies
+                            ORDER BY last_access_utc DESC''')
+
+         for i in cursor.fetchall():
+            name = i[0]
+            host_key = i[1]
+            value = i[2]
+            path = i[3]
+            expiry = dt_from_webkit_epoch(i[4])
+            creation = dt_from_webkit_epoch(i[5])
+            last_access = dt_from_webkit_epoch(i[6])
+
+            yield Cookie(host_key, name, path, value, expiry, creation,
+                         last_access)
