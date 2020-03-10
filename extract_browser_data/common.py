@@ -16,6 +16,8 @@
 # limitations under the License.
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 
+# TODO __repr__ for these classes
+
 
 class Extension:
    '''TODO'''
@@ -61,14 +63,37 @@ class Bookmark:
 
    def __str__(self):
       if self.is_folder:
-         result = "'{}'".format(self.title)
+         if self.title:
+            result = "'{}' ".format(self.title)
+         else:
+            result = ""
 
          if self.children:
-            return result + ' [{} children]'.format(len(self.children))
+            return result + '[{} children]'.format(len(self.children))
 
-         return result + ' []'
+         return result + '[]'
 
       return "'{}' {}".format(self.title, self.url)
+
+   def flatten(self):
+      '''Flattens bookmarks in folder so that it results in a list of all
+      bookmarks'''
+      if not self.is_folder:
+         # cannot flatten a non-folder bookmark
+         return [self]
+
+      bookmarks = []
+
+      def recursive(b):
+         if b.is_folder:
+            for i in b.children:
+               recursive(i)
+         else:
+            bookmarks.append(b)
+
+      recursive(self)
+
+      return bookmarks
 
    @classmethod
    def new_folder(cls, title, date_added, children, **extras):
@@ -92,6 +117,7 @@ class Cookie:
       self.expiry = expiry
       self.date_added = date_added
       self.last_accessed = last_accessed
+      self.extras = extras
 
    def __str__(self):
       return "{} {} {}".format(self.base_domain, self.path, self.name)

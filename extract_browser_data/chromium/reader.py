@@ -118,8 +118,12 @@ class ChromiumReader(Reader):
 
       roots = data['roots']
 
-      return recursive(roots['bookmark_bar']), recursive(
-          roots['other']), recursive(roots['synced'])
+      toolbar = recursive(roots['bookmark_bar'])
+      other = recursive(roots['other'])
+      synced = recursive(roots['synced'])
+
+      # NOTE when changing keep the order in sync with firefox/reader.py
+      return Bookmark.new_folder('root', 0, [toolbar, other, synced])
 
    def cookies(self):
       raise NotImplementedError()

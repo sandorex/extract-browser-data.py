@@ -224,6 +224,7 @@ class FirefoxReader(Reader):
       if db_version != 53:
          raise util.UnsupportedSchema(FILE, db_version)
 
+      # TODO separators are folders without a title and chromium doesnt have them
       with db_places:
          cursor = db_places.cursor()
          # fetches all folders
@@ -273,15 +274,17 @@ class FirefoxReader(Reader):
                              last_modified=dt_from_epoch(
                                  last_modified, 'microseconds')))
 
-      bookmarks_menu = main_folders[2]
       toolbar = main_folders[3]
-      tags = main_folders[4]
       other_bookmarks = main_folders[5]
       mobile = main_folders[6]
 
-      # TODO some way to retain the data but be compatible between chromium and firefox
-      # NOTE first three are copying layout of chromium for compatability
-      return toolbar, other_bookmarks, mobile, bookmarks_menu, tags
+      # these are firefox only
+      bookmarks_menu = main_folders[2]
+      tags = main_folders[4]
+
+      # NOTE when changing keep the order in sync with chromium/reader.py
+      return Bookmark.new_folder(
+          'root', 0, [toolbar, other_bookmarks, mobile, bookmarks_menu, tags])
 
    def cookies(self):
       FILE = self.profile.path.joinpath(COOKIES)
