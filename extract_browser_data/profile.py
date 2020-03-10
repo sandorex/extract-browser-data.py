@@ -35,6 +35,27 @@ class Profile(ABC):
       '''Tries to create a writer for the profile'''
       return self.writer_type(self, *args, **kwargs)
 
+   @staticmethod
+   def find_compatible_profile(path):
+      '''Finds a profile that is compatible for path'''
+      for c in Profile.__subclasses__():
+         if c.is_valid_profile(path):
+            return c
+
+      return None
+
+   @staticmethod
+   def open_profile(path, *args, **kwargs):
+      """Opens profile, automatically finds a compatible profile class
+
+      Returns ``None`` if no compatible profile is found
+      """
+      profile = Profile.find_compatible_profile(path)
+      if profile is not None:
+         return profile(None, path, *args, **kwargs)
+
+      return None
+
    # ABSTRACT #
    @staticmethod
    @abstractmethod

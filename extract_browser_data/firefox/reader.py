@@ -21,7 +21,8 @@ import re
 from os.path import join as join_path, isfile as file_exists
 from .. import util
 from ..reader import Reader
-from .util import open_lz4_file
+from ..common import Extension, URLVisit, Bookmark, Cookie
+from .util import open_lz4, dt_from_epoch
 from .files import (SESSIONSTORE, EXTENSIONS, PLACES, COOKIES, SIGNED_IN_USER,
                     CONTAINERS)
 
@@ -60,8 +61,7 @@ class FirefoxReader(Reader):
       for container in data['identities']:
          if container['public']:
             yield {
-                'id': self._find_container(
-                    container['userContextId']),  # TODO get container
+                'id': container['userContextId'],
                 'name': container['name'],
                 'icon': container['icon'],
                 'color': container['color']
@@ -81,7 +81,7 @@ class FirefoxReader(Reader):
          yield
          return
 
-      with open_lz4_file(FILE) as file:
+      with open_lz4(FILE) as file:
          data = json.load(file)
 
       schema_version = data['version']
@@ -145,6 +145,7 @@ class FirefoxReader(Reader):
       if schema_version != 31:
          raise util.UnsupportedSchema(FILE, schema_version)
 
+      extensions = []
       for extension in data['addons']:
          # skip themes and such
          if extension["type"] != "extension":
@@ -155,10 +156,8 @@ class FirefoxReader(Reader):
             continue
 
          # both installDate and updateDate are in milliseconds since epoch
-         install_date = util.datetime_from_epoch(extension['installDate'],
-                                                 'milliseconds')
-         last_update = util.datetime_from_epoch(extension['updateDate'],
-                                                'milliseconds')
+         install_date = dt_from_epoch(extension['installDate'], 'milliseconds')
+         last_update = dt_from_epoch(extension['updateDate'], 'milliseconds')
 
          _id = extension['id']
 
@@ -182,92 +181,112 @@ class FirefoxReader(Reader):
             description = extension["defaultLocale"]['description']
             author = extension["defaultLocale"]['creator']
 
-         # BUG sometimes author is None
-         yield {
-             'id': _id,
-             'version': extension['version'],
-             'name': name,
-             'description': description.strip(),
-             'enabled': True,  # TODO check if it's possible to read from files
-             'url': url,
-             'install_date': install_date,
-
-             # NON CROSS-BROWSER DATA
-             'extras': {
-                 'author': author,
-                 'download_url': extension['sourceURI'],
-                 'last_update': last_update
-             }
+         extras = {
+             'disabled_by_user': extension['userDisabled'],
+             # author can be None
+             'author': author,
+             'download_url': extension['sourceURI'],
+             'last_update': last_update
          }
+
+         # pylint: disable=too-many-function-args
+         extensions.append(
+             Extension(_id, name, extension['version'], extension['active'],
+                       description.strip(), url, install_date, **extras))
+
+      return extensions
 
    def history(self):
       FILE = self.profile.path.joinpath(PLACES)
-      db_places, db_version = self.open_database(FILE)
+      db_places = self.open_database(FILE)
+      db_version = util.read_database_version(db_places)
 
       if db_version != 53:
          raise util.UnsupportedSchema(FILE, db_version)
 
       with db_places:
-         # TODO get contextId
          cursor = db_places.cursor()
-         cursor.execute(r'''SELECT url, title, last_visit_date
-                              FROM moz_places
-                              WHERE last_visit_date IS NOT NULL
-                              ORDER BY last_visit_date DESC''')
+         cursor.execute(r'''SELECT url, title, last_visit_date, visit_count
+                            FROM moz_places
+                            WHERE last_visit_date IS NOT NULL
+                            ORDER BY last_visit_date DESC''')
 
-         for url, title, last_visit in cursor.fetchall():
-            yield {
-                'url': url,
-                'title': title,
-                # time is in microseconds since epoch
-                'last_visit': util.datetime_from_epoch(last_visit,
-                                                       'microseconds')
-            }
+         for url, title, last_visit, visit_count in cursor.fetchall():
+            yield URLVisit(url, title, dt_from_epoch(last_visit,
+                                                     'microseconds'),
+                           visit_count)
 
    def bookmarks(self):
       FILE = self.profile.path.joinpath(PLACES)
-      db_places, db_version = self.open_database(FILE)
+      db_places = self.open_database(FILE)
+      db_version = util.read_database_version(db_places)
 
       if db_version != 53:
          raise util.UnsupportedSchema(FILE, db_version)
 
       with db_places:
          cursor = db_places.cursor()
-         cursor.execute(r'''SELECT P.url,
-                                    B.id,
-                                    B.parent,
-                                    B.title,
-                                    B.dateAdded,
-                                    B.lastModified
-                              FROM moz_bookmarks B
-                              JOIN moz_places P
-                              WHERE B.fk == P.id
-                              ORDER BY B.lastModified DESC''')
+         # fetches all folders
+         cursor.execute(r'''SELECT id,
+                                   parent,
+                                   title,
+                                   dateAdded,
+                                   lastModified
+                            FROM moz_bookmarks
+                            WHERE fk IS NULL
+							       AND id IS NOT 1
+                            ORDER BY id ASC''')
 
-         # TODO get the folder hiarcharchy
-         # TODO make Bookmark class
+         main_folders = {}
+         folders = {}
 
-         for url, _id, parent, title, date_added, last_modified in cursor.fetchall(
-         ):
-            yield {
-                'url':
-                url,
-                'id':
-                _id,
-                'parent':
-                parent,
-                'title':
+         for _id, parent, title, date_added, last_modified in cursor.fetchall():
+            bookmark = Bookmark.new_folder(
                 title,
-                # time is in microseconds since epoch
-                'date_added':
-                util.datetime_from_epoch(date_added, 'microseconds'),
-                'last_modified':
-                util.datetime_from_epoch(last_modified, 'microseconds')
-            }
+                dt_from_epoch(date_added, 'microseconds'), [],
+                last_modified=dt_from_epoch(last_modified, 'microseconds'))
+
+            folders[_id] = bookmark
+
+            if parent == 1:
+               main_folders[_id] = bookmark
+            else:
+               folders[parent].children.append(bookmark)
+
+         # fetches all bookmarks
+         cursor.execute(r'''SELECT P.url,
+                                   B.parent,
+                                   B.title,
+                                   B.dateAdded,
+                                   B.lastModified
+                            FROM moz_bookmarks B
+                            JOIN moz_places P
+                            WHERE B.fk == P.id
+                            ORDER BY B.lastModified DESC''')
+
+         for url, parent, title, date_added, last_modified in cursor.fetchall():
+            folder = folders[parent]
+            folder.children.append(
+                Bookmark.new(url,
+                             title,
+                             dt_from_epoch(date_added, 'microseconds'),
+                             last_modified=dt_from_epoch(
+                                 last_modified, 'microseconds')))
+
+      bookmarks_menu = main_folders[2]
+      toolbar = main_folders[3]
+      tags = main_folders[4]
+      other_bookmarks = main_folders[5]
+      mobile = main_folders[6]
+
+      # TODO some way to retain the data but be compatible between chromium and firefox
+      # NOTE first three are copying layout of chromium for compatability
+      return toolbar, other_bookmarks, mobile, bookmarks_menu, tags
 
    def cookies(self):
       FILE = self.profile.path.joinpath(COOKIES)
-      db_cookies, db_version = self.open_database(FILE)
+      db_cookies = self.open_database(FILE)
+      db_version = util.read_database_version(db_cookies)
 
       if db_version != 10:
          raise util.UnsupportedSchema(FILE, db_version)
@@ -299,23 +318,9 @@ class FirefoxReader(Reader):
 
                container = self._find_container(int(match.group(1)))
 
-            yield {
-                'base-domain':
-                base_domain,
-                'name':
-                name,
-                'path':
-                path,
-                'value':
-                value,
-                'container':
-                container,
-                # time is in seconds since epoch
-                'expiry':
-                util.datetime_from_epoch(expiry),
-                # both creationTime and lastAccessed are in microseconds since epoch
-                'creation-time':
-                util.datetime_from_epoch(creation_time, 'microseconds'),
-                'last-accessed':
-                util.datetime_from_epoch(last_accessed, 'microseconds')
-            }
+            extras = {'container': container}
+
+            # pylint: disable=too-many-function-args
+            yield Cookie(base_domain, name, path, value, dt_from_epoch(expiry),
+                         dt_from_epoch(creation_time, 'microseconds'),
+                         dt_from_epoch(last_accessed, 'microseconds'), **extras)

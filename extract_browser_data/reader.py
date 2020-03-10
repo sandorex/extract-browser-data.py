@@ -27,7 +27,7 @@ class Reader(ABC):
 
    def open_database(self, *path):
       '''Opens a database readonly'''
-      return util.open_database(self.profile.path.joinpaths(*path),
+      return util.open_database(self.profile.path.joinpath(*path),
                                 readonly=True,
                                 copy_if_locked=True)
 

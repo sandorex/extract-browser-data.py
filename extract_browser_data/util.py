@@ -19,7 +19,6 @@ import os
 import sqlite3
 import tempfile
 import shutil
-import datetime
 
 
 class UnsupportedSchema(RuntimeError):
@@ -28,41 +27,53 @@ class UnsupportedSchema(RuntimeError):
    def __init__(self, file, version, *xpath):
       self.file = file
       self.version = version
-      self.xpath = '/' + '/'.join(xpath)
-
-      if xpath is None:
-         msg = "Unsupported schema version {} for file '{}'".format(
-             self.version, self.file)
+      if len(xpath) > 0:
+         self.xpath = '/' + '/'.join(xpath)
       else:
-         msg = "Unsupported schema version {} in file '{}' at xpath '{}'".format(
-             self.version, self.file, self.xpath)
+         self.xpath = None
+
+      msg = "Unsupported schema version {} in file '{}'".format(
+          self.version, self.file)
+
+      if self.xpath is not None:
+         msg += " at xpath '{}'".format(self.xpath)
 
       super().__init__(msg)
 
 
-def read_database_version(conn):
-   """Tries to read version from meta table if it fails reads PRAGMA
-   user_version"""
-   try:
-      cur = conn.cursor()
-      cur.execute('SELECT version, last_supported_version FROM meta')
-      return cur.fetchone()
-   except sqlite3.OperationalError as err:
-      if str(err) == 'no such table: meta':
-         cur.execute('PRAGMA user_version')
-         return cur.fetchone()[0]
+def read_database_version(conn, use_meta=False):
+   """Reads database version
 
-      raise err from None
+   Uses ``PRAGMA user_version`` by default, use ``use_meta`` to get version from
+   meta table instead
+   """
+   cur = conn.cursor()
+
+   if use_meta:
+      cur = conn.cursor()
+      cur.execute('SELECT key, value FROM meta')
+
+      version = None
+      last_compatible_version = None
+
+      for key, value in cur.fetchall():
+         if key == 'version':
+            version = value
+
+         if key == 'last_compatible_version':
+            last_compatible_version = value
+
+      return int(version), int(last_compatible_version)
+
+   cur.execute('PRAGMA user_version')
+   return cur.fetchone()[0]
 
 
 def is_database_locked(conn):
-   '''Checks if database is locked'''
-   cur = conn.cursor()
-   cur.execute(
-       '''SELECT name FROM sqlite_master WHERE type='table' ORDER BY name''')
-
+   '''Checks if database is locked (may take a while if database timeout is
+   long)'''
    try:
-      cur.fetchone()
+      conn.execute('PRAGMA user_version')
    except sqlite3.OperationalError as err:
       if str(err) == 'database is locked':
          return True
@@ -97,7 +108,7 @@ class TempDatabase:
 
 def open_database(path, readonly=False, copy_if_locked=False, lock=False):
    """TODO"""
-   assert not (readonly and lock), 'cannot lock readonly database'
+   assert not (readonly and lock), 'cannot lock a readonly database'
 
    if readonly:
       conn = sqlite3.connect('file:{}?mode=ro'.format(path), uri=True)
@@ -111,42 +122,4 @@ def open_database(path, readonly=False, copy_if_locked=False, lock=False):
          # lock for both read and write
          conn.execute('BEGIN EXCLUSIVE')
 
-   return conn, read_database_version(conn)
-
-
-def datetime_from_epoch(epoch: int,
-                        time_unit: str = None,
-                        webkit: bool = False) -> datetime.datetime:
-   """Converts epoch into ``datetime``
-
-   ``time_unit`` represents unit in which epoch is in
-
-   ``webkit`` is epoch in webkit format
-
-   Webkit Format
-   =============
-
-   This timestamp format is used in web browsers such as Apple Safari (WebKit),
-   Google Chrome and Opera (Chromium/Blink). It's a 64-bit value for
-   microseconds since Jan 1, 1601 00:00 UTC. One microsecond is one-millionth of
-   a second.
-
-   (https://www.epochconverter.com/webkit)
-   """
-
-   if epoch is None:
-      return None
-
-   if webkit:
-      unit = 'microseconds'
-      year_since = 1601
-   else:
-      year_since = 1970
-
-   if time_unit is None:
-      unit = 'seconds'
-   else:
-      unit = time_unit
-
-   return datetime.datetime(year_since, 1,
-                            1) + datetime.timedelta(**{unit: epoch})
+   return conn

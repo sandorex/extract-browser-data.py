@@ -17,9 +17,6 @@
 
 VERSION = '0.1'
 
-from . import profile
-from . import reader
-from . import writer
-
+from .profile import Profile
 from .firefox import FirefoxProfile
 from .chromium import ChromiumProfile
