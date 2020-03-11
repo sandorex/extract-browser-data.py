@@ -55,18 +55,21 @@ class ChromiumReader(Reader):
          # https://chromium.googlesource.com/chromium/src/+/master/extensions/browser/disable_reason.h#23
          disabled = ext.get('disable_reasons', 0)
 
-         extras = {
-             'author': manifest.get('author'),
-             'disable_reason': disabled,
-             'from_webstore': ext['from_webstore']
-         }
-
          extensions.append(
              Extension(
-                 ext_id, manifest['name'], manifest['version'], disabled == 0,
-                 manifest['description'],
-                 'https://chrome.google.com/webstore/detail/{}'.format(ext_id),
-                 dt_from_webkit_epoch(int(ext['install_time'])), **extras))
+                 id=ext_id,
+                 name=manifest['name'],
+                 version=manifest['version'],
+                 enabled=disabled == 0,
+                 description=manifest['description'],
+                 page_url='https://chrome.google.com/webstore/detail/{}'.format(
+                     ext_id),
+                 install_date=dt_from_webkit_epoch(int(ext['install_time'])),
+
+                 # extras
+                 author=manifest.get('author'),
+                 disable_reason=disabled,
+                 from_webstore=ext['from_webstore']))
 
       return extensions
 
@@ -146,13 +149,10 @@ class ChromiumReader(Reader):
                             ORDER BY last_access_utc DESC''')
 
          for i in cursor.fetchall():
-            name = i[0]
-            host_key = i[1]
-            value = i[2]
-            path = i[3]
-            expiry = dt_from_webkit_epoch(i[4])
-            creation = dt_from_webkit_epoch(i[5])
-            last_access = dt_from_webkit_epoch(i[6])
-
-            yield Cookie(host_key, name, path, value, expiry, creation,
-                         last_access)
+            yield Cookie(base_domain=i[1],
+                         name=i[0],
+                         path=i[3],
+                         value=i[2],
+                         expiry=dt_from_webkit_epoch(i[4]),
+                         date_added=dt_from_webkit_epoch(i[5]),
+                         last_accessed=dt_from_webkit_epoch(i[6]))

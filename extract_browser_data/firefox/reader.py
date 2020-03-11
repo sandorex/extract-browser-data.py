@@ -181,18 +181,21 @@ class FirefoxReader(Reader):
             description = extension["defaultLocale"]['description']
             author = extension["defaultLocale"]['creator']
 
-         extras = {
-             'disabled_by_user': extension['userDisabled'],
-             # author can be None
-             'author': author,
-             'download_url': extension['sourceURI'],
-             'last_update': last_update
-         }
-
-         # pylint: disable=too-many-function-args
          extensions.append(
-             Extension(_id, name, extension['version'], extension['active'],
-                       description.strip(), url, install_date, **extras))
+             Extension(
+                 id=_id,
+                 name=name,
+                 version=extension['version'],
+                 enabled=extension['active'],
+                 description=description.strip(),
+                 page_url=url,
+                 install_date=install_date,
+
+                 # extras
+                 disabled_by_user=extension['userDisabled'],
+                 author=author,
+                 download_url=extension['sourceURI'],
+                 last_update=last_update))
 
       return extensions
 
@@ -321,9 +324,14 @@ class FirefoxReader(Reader):
 
                container = self._find_container(int(match.group(1)))
 
-            extras = {'container': container}
+            yield Cookie(
+                base_domain=base_domain,
+                name=name,
+                path=path,
+                value=value,
+                expiry=dt_from_epoch(expiry),
+                date_added=dt_from_epoch(creation_time, 'microseconds'),
+                last_accessed=dt_from_epoch(last_accessed, 'microseconds'),
 
-            # pylint: disable=too-many-function-args
-            yield Cookie(base_domain, name, path, value, dt_from_epoch(expiry),
-                         dt_from_epoch(creation_time, 'microseconds'),
-                         dt_from_epoch(last_accessed, 'microseconds'), **extras)
+                # extras
+                container=container)

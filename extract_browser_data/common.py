@@ -16,21 +16,33 @@
 # limitations under the License.
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 
-# TODO __repr__ for these classes
+import datetime
 
 
 class Extension:
    '''TODO'''
-   def __init__(self, _id, name, version, enabled, description, addon_page,
-                install_date, **extras):
-      self.id = _id
-      self.name = name
-      self.version = version
-      self.enabled = enabled
-      self.description = description
-      self.addon_page = addon_page
-      self.install_date = install_date
-      self.extras = extras
+   id: str
+   name: str
+   version: str
+   enabled: bool
+   description: str
+   addon_page: str
+   install_date: datetime.datetime
+
+   def __init__(self, **kwargs):
+      args = [
+          'id', 'name', 'version', 'enabled', 'description', 'addon_page',
+          'install_date'
+      ]
+
+      self.extras = []
+
+      for i in args:
+         setattr(self, i, kwargs[i])
+
+      for k, v in kwargs.items():
+         if k not in args:
+            self.extras[k] = v
 
    def __str__(self):
       return "{} '{}' {}{}".format(self.id, self.name, self.version,
@@ -108,16 +120,28 @@ class Bookmark:
 
 class Cookie:
    '''TODO'''
-   def __init__(self, base_domain, name, path, value, expiry, date_added,
-                last_accessed, **extras):
-      self.base_domain = base_domain
-      self.name = name
-      self.path = path
-      self.value = value
-      self.expiry = expiry
-      self.date_added = date_added
-      self.last_accessed = last_accessed
-      self.extras = extras
+   base_domain: str
+   name: str
+   path: str
+   value: str
+   expiry: datetime.datetime
+   date_added: datetime.datetime
+   last_accessed: datetime.datetime
+
+   def __init__(self, **kwargs):
+      args = [
+          'base_domain', 'name', 'path', 'value', 'expiry', 'date_added',
+          'last_accessed'
+      ]
+
+      self.extras = []
+
+      for i in args:
+         setattr(self, i, kwargs[i])
+
+      for k, v in kwargs.items():
+         if k not in args:
+            self.extras[k] = v
 
    def __str__(self):
       return "{} {} {}".format(self.base_domain, self.path, self.name)
