@@ -42,4 +42,4 @@ venv.bak/
 dmypy.json
 
 # docs
-docs/_build
+docs/source/_build/
