@@ -20,7 +20,24 @@ from pathlib import Path
 
 
 class Profile(ABC):
-   """Base browser profile class"""
+   """Base browser profile class
+
+   Attributes:
+      name (str): Name of the profile
+      path (Path): Path to the profile
+      reader_type (type): Reader class used to read from profile (must be a
+         subclass of :class:`.reader.Reader`)
+      writer_type (type): Writer class used to read from profile (must be a
+         subclass of :class:`.writer.Writer`)
+
+   Arguments:
+      name (str): The name of the profile
+      path (str or Path): The path to the profile
+      reader_type (type): Type that will be used as the reader, must be
+         subclass of :class:`.reader.Reader`
+      writer_type (type): Type that will be used as the writer, must be
+         subclass of :class:`.writer.Writer`
+   """
    def __init__(self, name, path, reader_type, writer_type):
       self.name = name
       self.path = Path(path)
@@ -37,7 +54,12 @@ class Profile(ABC):
 
    @staticmethod
    def find_compatible_profile(path):
-      '''Finds a profile that is compatible for path'''
+      """Tries to find a compatible profile by going through subclasses of class
+      :class:`Profile`
+
+      Returns:
+         ``None`` if a compatible class is not found
+      """
       for c in Profile.__subclasses__():
          if c.is_valid_profile(path):
             return c
@@ -46,7 +68,8 @@ class Profile(ABC):
 
    @staticmethod
    def open_profile(path, *args, **kwargs):
-      """Opens profile, automatically finds a compatible profile class
+      """Opens profile by using a compatible profile subclass (searches using
+      :meth:`Profile.find_compatible_profile`)
 
       Returns ``None`` if no compatible profile is found
       """

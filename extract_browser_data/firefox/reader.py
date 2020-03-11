@@ -198,7 +198,7 @@ class FirefoxReader(Reader):
 
    def history(self):
       FILE = self.profile.path.joinpath(PLACES)
-      db_places = self.open_database(FILE)
+      db_places = self._open_database(FILE)
       db_version = util.read_database_version(db_places)
 
       if db_version != 53:
@@ -218,7 +218,7 @@ class FirefoxReader(Reader):
 
    def bookmarks(self):
       FILE = self.profile.path.joinpath(PLACES)
-      db_places = self.open_database(FILE)
+      db_places = self._open_database(FILE)
       db_version = util.read_database_version(db_places)
 
       if db_version != 53:
@@ -288,7 +288,7 @@ class FirefoxReader(Reader):
 
    def cookies(self):
       FILE = self.profile.path.joinpath(COOKIES)
-      db_cookies = self.open_database(FILE)
+      db_cookies = self._open_database(FILE)
       db_version = util.read_database_version(db_cookies)
 
       if db_version != 10:

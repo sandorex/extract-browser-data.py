@@ -16,17 +16,21 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
-from .profile import Profile
 from . import util
 
 
 class Reader(ABC):
-   '''Base class for browser profile reader'''
-   def __init__(self, profile: Profile):
+   """Base class for browser profile reader
+
+   Arguments:
+      profile (Profile): The profile to read from (must be a subclass of
+         :class:`.profile.Profile`)
+   """
+   def __init__(self, profile):
       self.profile = profile
 
-   def open_database(self, *path):
-      '''Opens a database readonly'''
+   def _open_database(self, *path):
+      '''Opens a sqlite3 database read-only'''
       return util.open_database(self.profile.path.joinpath(*path),
                                 readonly=True,
                                 copy_if_locked=True)
@@ -34,20 +38,36 @@ class Reader(ABC):
    # ABSTRACT #
    @abstractmethod
    def extensions(self):
-      '''Returns extensions installed by user'''
+      """Gets extensions installed in the profile
+
+      Returns:
+         A list of :class:`.common.Extension`
+      """
       raise NotImplementedError()
 
    @abstractmethod
    def history(self):
-      '''Returns browsing history'''
+      """Gets browsing history
+
+      Returns:
+         A generator of :class:`.common.URLVisit`
+      """
       raise NotImplementedError()
 
    @abstractmethod
    def bookmarks(self):
-      '''Returns bookmarks'''
+      """Gets bookmarks
+
+      Returns:
+         A list of :class:`.common.Bookmark`
+      """
       raise NotImplementedError()
 
    @abstractmethod
    def cookies(self):
-      '''Returns cookies'''
+      """Gets cookies
+
+      Returns:
+         A generator of :class:`.common.Cookie`
+      """
       raise NotImplementedError()

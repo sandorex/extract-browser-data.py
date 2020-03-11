@@ -72,7 +72,7 @@ class ChromiumReader(Reader):
 
    def history(self):
       FILE = self.profile.path.joinpath(HISTORY)
-      db_history = self.open_database(FILE)
+      db_history = self._open_database(FILE)
       db_version, db_lsv = util.read_database_version(db_history, use_meta=True)
 
       if db_lsv > 42:
@@ -127,7 +127,7 @@ class ChromiumReader(Reader):
 
    def cookies(self):
       FILE = self.profile.path.joinpath(COOKIES)
-      db_history = self.open_database(FILE)
+      db_history = self._open_database(FILE)
       db_version, db_lsv = util.read_database_version(db_history, use_meta=True)
 
       if db_lsv > 12:

@@ -40,3 +40,6 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# docs
+docs/_build

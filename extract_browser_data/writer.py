@@ -17,12 +17,22 @@
 
 from abc import ABC, abstractmethod
 from . import util
-from .profile import Profile
 
 
 class Writer(ABC):
-   """Base class for browser profile writer"""
-   def __init__(self, profile: Profile):
+   """Base class for browser profile writer
+
+   Warning:
+      A writer must be closed otherwise the databases may stay locked
+
+   Tip:
+      It's recommended to use this class as a context manager
+
+   Arguments:
+      profile (Profile): The profile to write to (must be a subclass of
+         :class:`.profile.Profile`)
+   """
+   def __init__(self, profile):
       self.profile = profile
 
    def __enter__(self):
@@ -32,32 +42,33 @@ class Writer(ABC):
    def __exit__(self, *args):
       self.close()
 
-   def open_database(self, *path):
+   def _open_database(self, *path):
       '''Opens a database and locks it'''
       return util.open_database(self.profile.path.joinpaths(*path), lock=True)
 
    # ABSTRACT #
    @abstractmethod
    def _open(self):
-      '''Opens the writer'''
+      '''Gets locks on required databases so it can write without
+      interruptions'''
       raise NotImplementedError()
 
    @abstractmethod
    def close(self):
-      '''Closes the writer'''
+      '''Closes databases that were locked when opened'''
       raise NotImplementedError()
 
    @abstractmethod
    def write_history(self, history, append=False):
-      '''Writes to history'''
+      '''TODO'''
       raise NotImplementedError()
 
    @abstractmethod
    def write_bookmarks(self, bookmarks, append=False):
-      '''Writes to bookmarks'''
+      '''TODO'''
       raise NotImplementedError()
 
    @abstractmethod
    def write_cookies(self, cookies, append=False):
-      '''Writes to cookies'''
+      '''TODO'''
       raise NotImplementedError()

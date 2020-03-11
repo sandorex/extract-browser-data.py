@@ -22,8 +22,16 @@ import shutil
 
 
 class UnsupportedSchema(RuntimeError):
-   '''Error that is caused when trying to read data from an unsupported schema
-   version'''
+   """Error caused when reading data with unsupported version
+
+   Arguments:
+      file (str): File where the unsupported version was found
+      version: Version found in the file
+      xpath (str): XPath to the version inside the file, used when reading json
+         or any other data format to signify that it's not a version of the
+         whole file but a section of it
+
+   """
    def __init__(self, file, version, *xpath):
       self.file = file
       self.version = version
@@ -42,6 +50,20 @@ class UnsupportedSchema(RuntimeError):
 
 
 def read_database_version(conn, use_meta=False):
+   """Reads version of database
+
+   Uses ``PRAGMA user_version`` or meta table to extract database version
+
+   Arguments:
+      conn (sqlite3.Connection): Connection to a sqlite3 database
+      use_meta (bool): Whether or not to use meta table to get the version
+
+   Returns:
+      If ``use_meta`` is true then it will return a tuple of
+      ``version`` and ``last_supported_version`` otherwise it returns just
+      ``version``
+
+   """
    """Reads database version
 
    Uses ``PRAGMA user_version`` by default, use ``use_meta`` to get version from
@@ -70,8 +92,11 @@ def read_database_version(conn, use_meta=False):
 
 
 def is_database_locked(conn):
-   '''Checks if database is locked (may take a while if database timeout is
-   long)'''
+   """Checks is database locked
+
+   Notice:
+      This function may block for a while depending on timeout of the connection
+   """
    try:
       conn.execute('PRAGMA user_version')
    except sqlite3.OperationalError as err:
@@ -84,7 +109,18 @@ def is_database_locked(conn):
 
 
 class TempDatabase:
-   '''Copies a file and opens it as a sqlite database'''
+   """Wrapper around sqlite database and a tempfile
+
+   Copies a database file into a tempfile and then opens it until it's closed
+   then it deletes the tempfile and connection to the database
+
+   Warning:
+      The instance must be closed otherwise it will leave the tempfile undeleted
+      with data read inside which may or may not be a security risk
+
+   Arguments:
+      path (str): Path to the database file
+   """
    def __init__(self, path: str):
       with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
          self.file_path = tmpfile.name
@@ -107,7 +143,18 @@ class TempDatabase:
 
 
 def open_database(path, readonly=False, copy_if_locked=False, lock=False):
-   """TODO"""
+   """Opens a sqlite database
+
+   Arguments:
+      path (str): Path to the database file
+      readonly (bool): Should the database be open read-only
+      copy_if_locked (bool): Should database be copied and then opened if it's
+         locked (only in combination with ``readonly``)
+
+   Returns:
+      :class:`sqlite3.Connection` or if ``copy_if_locked`` is true then
+      :class:`TempDatabase`
+   """
    assert not (readonly and lock), 'cannot lock a readonly database'
 
    if readonly:
