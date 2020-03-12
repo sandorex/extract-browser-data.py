@@ -227,17 +227,17 @@ class FirefoxReader(Reader):
       if db_version != 53:
          raise util.UnsupportedSchema(FILE, db_version)
 
-      # TODO separators are folders without a title and chromium doesnt have them
+      # NOTE separators are ignored cause they are not supported in chromium
       with db_places:
          cursor = db_places.cursor()
-         # fetches all folders
+         # fetches only folders
          cursor.execute(r'''SELECT id,
                                    parent,
                                    title,
                                    dateAdded,
                                    lastModified
                             FROM moz_bookmarks
-                            WHERE fk IS NULL
+                            WHERE type IS 2
 							       AND id IS NOT 1
                             ORDER BY id ASC''')
 
@@ -252,12 +252,13 @@ class FirefoxReader(Reader):
 
             folders[_id] = bookmark
 
+            # id of 1 is the root folder
             if parent == 1:
                main_folders[_id] = bookmark
             else:
                folders[parent].children.append(bookmark)
 
-         # fetches all bookmarks
+         # fetches only bookmarks
          cursor.execute(r'''SELECT P.url,
                                    B.parent,
                                    B.title,
@@ -265,7 +266,8 @@ class FirefoxReader(Reader):
                                    B.lastModified
                             FROM moz_bookmarks B
                             JOIN moz_places P
-                            WHERE B.fk == P.id
+                            WHERE B.fk IS P.id
+                            AND B.type IS 1
                             ORDER BY B.lastModified DESC''')
 
          for url, parent, title, date_added, last_modified in cursor.fetchall():
