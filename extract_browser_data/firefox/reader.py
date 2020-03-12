@@ -313,8 +313,8 @@ class FirefoxReader(Reader):
                               FROM moz_cookies
                               ORDER BY lastAccessed DESC''')
 
-         for base_domain, name, path, value, attributes, expiry, creation_time, last_accessed in cursor.fetchall(
-         ):
+         for (base_domain, name, path, value, attributes, expiry, creation_time,
+              last_accessed) in cursor.fetchall():
             container = None
             if attributes:
                # NOTE this is the best way i've thought of to ensure that

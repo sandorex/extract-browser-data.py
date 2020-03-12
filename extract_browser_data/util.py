@@ -25,7 +25,7 @@ class UnsupportedSchema(RuntimeError):
    """Error caused when reading data with unsupported version
 
    Arguments:
-      file (str): File where the unsupported version was found
+      file (str): Path to the file where the unsupported version was found
       version: Version found in the file
       xpath (str): XPath to the version inside the file, used when reading json
          or any other data format to signify that it's not a version of the
@@ -63,11 +63,6 @@ def read_database_version(conn, use_meta=False):
       ``version`` and ``last_supported_version`` otherwise it returns just
       ``version``
 
-   """
-   """Reads database version
-
-   Uses ``PRAGMA user_version`` by default, use ``use_meta`` to get version from
-   meta table instead
    """
    cur = conn.cursor()
 
