@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
+from typing import Union
 from os.path import join as join_path, isfile as file_exists
 from .reader import FirefoxReader
 from .writer import FirefoxWriter
@@ -24,13 +26,13 @@ from ..profile import Profile
 
 class FirefoxProfile(Profile):
    """Profile for Firefox-based browsers"""
-   def __init__(self, name, path, default=False):
+   def __init__(self, name: str, path: Union[str, Path], default: bool = False):
       super().__init__(name, path, FirefoxReader, FirefoxWriter)
 
       self.default = default
 
    @staticmethod
-   def is_valid_profile(path):
+   def is_valid_profile(path: Union[str, Path]) -> bool:
       # checking if any of the files does not exist
       for file in [PLACES, COOKIES, EXTENSIONS]:
          if not file_exists(join_path(path, file)):
@@ -38,7 +40,7 @@ class FirefoxProfile(Profile):
 
       return True
 
-   def is_profile_running(self):
+   def is_profile_running(self) -> bool:
       # firefox deletes 'sessionstore.jsonlz4' when it starts and it's created
       # again when it quits, so i am using it as a lockfile
       return not self.path.joinpath(SESSIONSTORE).is_file()

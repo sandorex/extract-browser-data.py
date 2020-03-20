@@ -17,7 +17,8 @@
 
 import json
 
-from ..reader import Reader
+from typing import List, Iterator, Optional
+from ..profile import Reader
 from ..common import Extension, URLVisit, Bookmark, Cookie
 from .. import util
 from .util import dt_from_webkit_epoch
@@ -26,7 +27,7 @@ from .files import (HISTORY, SECURE_PREFERENCES, BOOKMARKS, COOKIES)
 
 class ChromiumReader(Reader):
    '''Profile reader for Chromium-based browsers'''
-   def extensions(self):
+   def extensions(self) -> List[Extension]:
       FILE = self.profile.path.joinpath(SECURE_PREFERENCES)
 
       with open(FILE) as f:
@@ -73,28 +74,27 @@ class ChromiumReader(Reader):
 
       return extensions
 
-   def history(self):
+   def history(self) -> Iterator[URLVisit]:
       FILE = self.profile.path.joinpath(HISTORY)
       db_history = self._open_database(FILE)
-      db_version, db_lsv = util.read_database_version(db_history, use_meta=True)
+      with db_history as conn:
+         db_version, db_lsv = util.read_database_version(conn, use_meta=True)
 
-      if db_lsv > 42:
-         raise util.UnsupportedSchema(FILE, (db_version, db_lsv))
+         if db_lsv > 42:
+            raise util.UnsupportedSchema(FILE, (db_version, db_lsv))
 
-      with db_history:
-         cursor = db_history.cursor()
-         cursor.execute(r'''SELECT title,
-                           url,
-                           visit_count,
-                           last_visit_time
-                           FROM urls WHERE hidden = 0
-                           ORDER BY last_visit_time DESC''')
+         cur = conn.execute(r'''SELECT title,
+                                url,
+                                visit_count,
+                                last_visit_time
+                                FROM urls WHERE hidden = 0
+                                ORDER BY last_visit_time DESC''')
 
-         for title, url, visit_count, last_visit_time in cursor.fetchall():
+         for title, url, visit_count, last_visit_time in cur.fetchall():
             yield URLVisit(url, title, dt_from_webkit_epoch(last_visit_time),
                            visit_count)
 
-   def bookmarks(self):
+   def bookmarks(self) -> Optional[Bookmark]:
       FILE = self.profile.path.joinpath(BOOKMARKS)
 
       if not FILE.is_file():
@@ -107,7 +107,7 @@ class ChromiumReader(Reader):
       if schema_version != 1:
          raise util.UnsupportedSchema(FILE, schema_version)
 
-      def recursive(bookmark):
+      def recursive(bookmark):  # type: ignore
          title = bookmark['name']
          date_added = dt_from_webkit_epoch(bookmark['date_added'])
 
@@ -128,27 +128,28 @@ class ChromiumReader(Reader):
       # NOTE when changing keep the order in sync with firefox/reader.py
       return Bookmark.new_folder('root', 0, [toolbar, other, synced])
 
-   def cookies(self):
+   def cookies(self) -> Iterator[Cookie]:
       FILE = self.profile.path.joinpath(COOKIES)
       db_history = self._open_database(FILE)
-      db_version, db_lsv = util.read_database_version(db_history, use_meta=True)
+      with db_history as conn:
+         db_version, db_lsv = util.read_database_version(conn, use_meta=True)
 
-      if db_lsv > 12:
-         raise util.UnsupportedSchema(FILE, (db_version, db_lsv))
+         if db_lsv > 12:
+            raise util.UnsupportedSchema(FILE, (db_version, db_lsv))
 
-      with db_history:
-         cursor = db_history.cursor()
-         cursor.execute(r'''SELECT name,
+         # TODO decrypt the cookie data
+
+         cur = conn.execute(r'''SELECT name,
                                    host_key,
                                    value,
                                    path,
                                    expires_utc,
                                    creation_utc,
                                    last_access_utc
-                            FROM cookies
-                            ORDER BY last_access_utc DESC''')
+                                FROM cookies
+                                ORDER BY last_access_utc DESC''')
 
-         for i in cursor.fetchall():
+         for i in cur.fetchall():
             yield Cookie(base_domain=i[1],
                          name=i[0],
                          path=i[3],

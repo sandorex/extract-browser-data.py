@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Union
+from pathlib import Path
 from os.path import join as join_path, isfile as file_exists
 from .. import util
 from ..profile import Profile
@@ -26,13 +28,12 @@ from .files import (PREFERENCES, HISTORY, LOGIN_DATA, WEB_DATA, COOKIES,
 
 class ChromiumProfile(Profile):
    """Profile for Chromium-based browsers"""
-   def __init__(self, name: str, path: str):
+   def __init__(self, name: str, path: Union[str, Path]):
       super().__init__(name, path, ChromiumReader, ChromiumWriter)
 
    @classmethod
-   def is_valid_profile(cls, path: str) -> bool:
+   def is_valid_profile(cls, path: Union[str, Path]) -> bool:
       # checking if any of the files does not exist
-      # TODO untested!
       for i in [
           PREFERENCES, HISTORY, LOGIN_DATA, WEB_DATA, COOKIES,
           SECURE_PREFERENCES, BOOKMARKS
@@ -44,10 +45,9 @@ class ChromiumProfile(Profile):
 
    def is_profile_running(self) -> bool:
       # chromium locks databases when it's running, so i am using that
-      # TODO untested!
+      # TODO test reliability
       for file in [LOGIN_DATA, WEB_DATA, COOKIES]:
-         if util.is_database_locked(util.open_database(
-             self.path.joinpath(file))):
+         if util.is_database_locked(self.path.joinpath(file)):
             return True
 
       return False

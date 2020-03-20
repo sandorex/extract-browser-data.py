@@ -15,54 +15,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
-
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Union, BinaryIO
+from pathlib import Path
 from io import BytesIO
 from lz4.block import decompress
 
 
-def open_lz4(file):
-   """Reads a mozilla lz4 file and decompressed it in memory while returning
-   `BytesIO`
+def open_lz4(file: Union[str, Path]) -> BinaryIO:
+   """Reads a mozilla lz4 file and decompresses it in memory while returning it
+   as `BytesIO`
    """
    with open(file, 'rb') as fp:
       # read mozilla header
       # thanks to https://github.com/jscher2000/Firefox-File-Utilities
       header = fp.read(8)
       if header != b'mozLz40\0':
-         raise RuntimeError(
-             'invalid header {} for mozilla lz4 file'.format(header))
+         raise RuntimeError(f'invalid header {header!r} for mozilla lz4 file')
 
       data = fp.read()
 
    return BytesIO(decompress(data))
 
 
-def dt_from_epoch(epoch, time_unit=None):
+class TimeUnit(Enum):
+   '''Time units for use with :fun:`dt_from_epoch`'''
+   Seconds = 'seconds'
+   Milliseconds = 'milliseconds'
+   Microseconds = 'microseconds'
+
+
+def dt_from_epoch(epoch: int,
+                  time_unit: TimeUnit = TimeUnit.Seconds) -> datetime:
    """Converts epoch into datetime using any time unit
 
-   Arguments
-   =========
+   Arguments:
+      epoch: Represents the time in time_unit
+      time_unit: Time unit of epoch supplied
 
-   epoch: int
-      Represents the time in time_unit
-
-   time_unit: str (defaults to seconds)
-      Represents a time unit which epochi s represented in as a string
-      (like seconds or microseconds)
-
-   Returns
-   =======
-
-   Datetime unless epoch is None then it returns None
+   Returns:
+      Datetime unless epoch is None then it returns None
    """
 
    if epoch is None:
       return None
 
-   if time_unit is None:
-      unit = 'seconds'
-   else:
-      unit = time_unit
-
-   return datetime.datetime(1970, 1, 1) + datetime.timedelta(**{unit: epoch})
+   return datetime(1970, 1, 1) + timedelta(**{time_unit.value: epoch})

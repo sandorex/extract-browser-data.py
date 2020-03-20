@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from abc import abstractmethod
-from ..writer import Writer
+from ..profile import Writer
 
 
 class ChromiumWriter(Writer):

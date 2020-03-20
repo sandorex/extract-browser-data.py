@@ -15,18 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
+from typing import Union
+from datetime import datetime, timedelta
 
 
-def dt_from_webkit_epoch(epoch):
-   """Converts webkit format epoch into ``datetime``
+def dt_from_webkit_epoch(epoch: Union[str, int]) -> datetime:
+   """Converts webkit format epoch into :class:`datetime.datetime`
 
-   Returns
-   =======
-   Datetime unless epoch is None then it returns None
+   Returns:
+      Datetime unless epoch is None then it returns None
 
    Webkit Format
-   =============
 
    This timestamp format is used in web browsers such as Apple Safari (WebKit),
    Google Chrome and Opera (Chromium/Blink). It's a 64-bit value for
@@ -42,4 +41,4 @@ def dt_from_webkit_epoch(epoch):
    if isinstance(epoch, str):
       epoch = int(epoch)
 
-   return datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=epoch)
+   return datetime(1601, 1, 1) + timedelta(microseconds=epoch)

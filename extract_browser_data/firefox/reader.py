@@ -18,37 +18,38 @@
 import json
 import re
 
-from os.path import join as join_path, isfile as file_exists
+from datetime import datetime
+from typing import Dict, Iterator, Any, List, Optional
+from os.path import isfile as file_exists
 from .. import util
-from ..reader import Reader
+from ..profile import Reader
 from ..common import Extension, URLVisit, Bookmark, Cookie
-from .util import open_lz4, dt_from_epoch
+from .util import open_lz4, dt_from_epoch, TimeUnit
 from .files import (SESSIONSTORE, EXTENSIONS, PLACES, COOKIES, SIGNED_IN_USER,
                     CONTAINERS)
 
 
 class FirefoxReader(Reader):
    '''Profile reader for Firefox-based browsers'''
-   def _find_container(self, context_id):
-      '''Finds container by the context id (returns context_id if it cannot be
-      found)'''
+   def _find_container(self, context_id: str) -> Optional[Dict[str, Any]]:
+      '''Finds container by the context id (returns None if it cannot be found)
+      '''
       for container in self.containers():
          if container['id'] == context_id:
             return container
 
-      return context_id
+      return None
 
    # FIREFOX READER #
-   def containers(self):
+   def containers(self) -> Iterator[Dict[str, Any]]:
       """Returns firefox containers
 
       .. NOTICE::
          This function is Firefox only!
       """
-      FILE = join_path(self.profile.path, CONTAINERS)
+      FILE = self.profile.path.joinpath(CONTAINERS)
 
-      if file_exists(FILE):
-         yield
+      if not file_exists(FILE):
          return
 
       with open(FILE) as file:
@@ -67,7 +68,7 @@ class FirefoxReader(Reader):
                 'color': container['color']
             }
 
-   def last_session(self):
+   def last_session(self) -> Optional[List[List[Dict[str, Any]]]]:
       """Gets last session
 
       Yields nothing if firefox is running
@@ -78,8 +79,7 @@ class FirefoxReader(Reader):
       FILE = self.profile.path.joinpath(SESSIONSTORE)
 
       if not file_exists(FILE):
-         yield
-         return
+         return None
 
       with open_lz4(FILE) as file:
          data = json.load(file)
@@ -88,6 +88,7 @@ class FirefoxReader(Reader):
       if schema_version != ['sessionrestore', 1]:
          raise util.UnsupportedSchema(FILE, schema_version)
 
+      windows = []
       for window in data['windows']:
          tabs = []
          for tab in window['tabs']:
@@ -102,9 +103,11 @@ class FirefoxReader(Reader):
                 'last-accessed': tab['lastAccessed']
             })
 
-         yield tabs
+         windows.append(tabs)
 
-   def account(self):
+      return windows
+
+   def account(self) -> Optional[Dict[str, Any]]:
       """Gets currently logged in account
 
       Returns ``None`` if account is not logged in
@@ -133,7 +136,7 @@ class FirefoxReader(Reader):
       }
 
    # READER #
-   def extensions(self):
+   def extensions(self) -> List[Extension]:
       FILE = self.profile.path.joinpath(EXTENSIONS)
 
       # NOTE utf8 encoding here is required
@@ -156,8 +159,10 @@ class FirefoxReader(Reader):
             continue
 
          # both installDate and updateDate are in milliseconds since epoch
-         install_date = dt_from_epoch(extension['installDate'], 'milliseconds')
-         last_update = dt_from_epoch(extension['updateDate'], 'milliseconds')
+         install_date = dt_from_epoch(extension['installDate'],
+                                      TimeUnit.Milliseconds)
+         last_update = dt_from_epoch(extension['updateDate'],
+                                     TimeUnit.Milliseconds)
 
          _id = extension['id']
 
@@ -181,13 +186,15 @@ class FirefoxReader(Reader):
             description = extension["defaultLocale"]['description']
             author = extension["defaultLocale"]['creator']
 
+         # TODO ensure name, description and auther is not None
+
          extensions.append(
              Extension(
                  id=_id,
                  name=name,
                  version=extension['version'],
                  enabled=extension['active'],
-                 description=description.strip(),
+                 description=description.strip(),  # type: ignore
                  page_url=url,
                  install_date=install_date,
 
@@ -199,39 +206,40 @@ class FirefoxReader(Reader):
 
       return extensions
 
-   def history(self):
+   def history(self) -> Iterator[URLVisit]:
       FILE = self.profile.path.joinpath(PLACES)
       db_places = self._open_database(FILE)
-      db_version = util.read_database_version(db_places)
 
-      if db_version != 53:
-         raise util.UnsupportedSchema(FILE, db_version)
+      with db_places as conn:
+         db_version = util.read_database_version(conn)[0]
 
-      with db_places:
-         cursor = db_places.cursor()
-         cursor.execute(r'''SELECT url, title, last_visit_date, visit_count
-                            FROM moz_places
-                            WHERE last_visit_date IS NOT NULL
-                            ORDER BY last_visit_date DESC''')
+         if db_version != 53:
+            raise util.UnsupportedSchema(FILE, db_version)
 
-         for url, title, last_visit, visit_count in cursor.fetchall():
-            yield URLVisit(url, title, dt_from_epoch(last_visit,
-                                                     'microseconds'),
+         cur = conn.execute(r'''SELECT url, title, last_visit_date, visit_count
+                 FROM moz_places
+                 WHERE last_visit_date IS NOT NULL
+                 ORDER BY last_visit_date DESC''')
+
+         for url, title, last_visit, visit_count in cur.fetchall():
+            yield URLVisit(url, title,
+                           dt_from_epoch(last_visit, TimeUnit.Microseconds),
                            visit_count)
 
-   def bookmarks(self):
+   def bookmarks(self) -> Bookmark:
       FILE = self.profile.path.joinpath(PLACES)
       db_places = self._open_database(FILE)
-      db_version = util.read_database_version(db_places)
+      with db_places as conn:
+         db_version = util.read_database_version(conn)[0]
 
-      if db_version != 53:
-         raise util.UnsupportedSchema(FILE, db_version)
+         if db_version != 53:
+            raise util.UnsupportedSchema(FILE, db_version)
 
-      # NOTE separators are ignored cause they are not supported in chromium
-      with db_places:
-         cursor = db_places.cursor()
+         cur = conn.cursor()
+
+         # NOTE separators are ignored cause they are not supported in chromium
          # fetches only folders
-         cursor.execute(r'''SELECT id,
+         cur.execute(r'''SELECT id,
                                    parent,
                                    title,
                                    dateAdded,
@@ -244,11 +252,12 @@ class FirefoxReader(Reader):
          main_folders = {}
          folders = {}
 
-         for _id, parent, title, date_added, last_modified in cursor.fetchall():
+         for _id, parent, title, date_added, last_modified in cur.fetchall():
             bookmark = Bookmark.new_folder(
                 title,
-                dt_from_epoch(date_added, 'microseconds'), [],
-                last_modified=dt_from_epoch(last_modified, 'microseconds'))
+                dt_from_epoch(date_added, TimeUnit.Microseconds), [],
+                last_modified=dt_from_epoch(last_modified,
+                                            TimeUnit.Microseconds))
 
             folders[_id] = bookmark
 
@@ -256,10 +265,10 @@ class FirefoxReader(Reader):
             if parent == 1:
                main_folders[_id] = bookmark
             else:
-               folders[parent].children.append(bookmark)
+               folders[parent].children.append(bookmark)  # type: ignore
 
          # fetches only bookmarks
-         cursor.execute(r'''SELECT P.url,
+         cur.execute(r'''SELECT P.url,
                                    B.parent,
                                    B.title,
                                    B.dateAdded,
@@ -270,14 +279,14 @@ class FirefoxReader(Reader):
                             AND B.type IS 1
                             ORDER BY B.lastModified DESC''')
 
-         for url, parent, title, date_added, last_modified in cursor.fetchall():
+         for url, parent, title, date_added, last_modified in cur.fetchall():
             folder = folders[parent]
-            folder.children.append(
+            folder.children.append(  # type: ignore
                 Bookmark.new(url,
                              title,
-                             dt_from_epoch(date_added, 'microseconds'),
+                             dt_from_epoch(date_added, TimeUnit.Microseconds),
                              last_modified=dt_from_epoch(
-                                 last_modified, 'microseconds')))
+                                 last_modified, TimeUnit.Microseconds)))
 
       toolbar = main_folders[3]
       other_bookmarks = main_folders[5]
@@ -289,19 +298,19 @@ class FirefoxReader(Reader):
 
       # NOTE when changing keep the order in sync with chromium/reader.py
       return Bookmark.new_folder(
-          'root', 0, [toolbar, other_bookmarks, mobile, bookmarks_menu, tags])
+          'root', datetime.now(),
+          [toolbar, other_bookmarks, mobile, bookmarks_menu, tags])
 
-   def cookies(self):
+   def cookies(self) -> Iterator[Cookie]:
       FILE = self.profile.path.joinpath(COOKIES)
       db_cookies = self._open_database(FILE)
-      db_version = util.read_database_version(db_cookies)
+      with db_cookies as conn:
+         db_version = util.read_database_version(conn)[0]
 
-      if db_version != 10:
-         raise util.UnsupportedSchema(FILE, db_version)
+         if db_version != 10:
+            raise util.UnsupportedSchema(FILE, db_version)
 
-      with db_cookies:
-         cursor = db_cookies.cursor()
-         cursor.execute(r'''SELECT
+         cur = conn.execute(r'''SELECT
                               baseDomain,
                               name,
                               path,
@@ -314,7 +323,7 @@ class FirefoxReader(Reader):
                               ORDER BY lastAccessed DESC''')
 
          for (base_domain, name, path, value, attributes, expiry, creation_time,
-              last_accessed) in cursor.fetchall():
+              last_accessed) in cur.fetchall():
             container = None
             if attributes:
                # NOTE this is the best way i've thought of to ensure that
@@ -324,7 +333,7 @@ class FirefoxReader(Reader):
                   raise RuntimeError(
                       f"invalid attributes found in cookie '{attributes}'")
 
-               container = self._find_container(int(match.group(1)))
+               container = self._find_container(match.group(1))
 
             yield Cookie(
                 base_domain=base_domain,
@@ -332,8 +341,9 @@ class FirefoxReader(Reader):
                 path=path,
                 value=value,
                 expiry=dt_from_epoch(expiry),
-                date_added=dt_from_epoch(creation_time, 'microseconds'),
-                last_accessed=dt_from_epoch(last_accessed, 'microseconds'),
+                date_added=dt_from_epoch(creation_time, TimeUnit.Microseconds),
+                last_accessed=dt_from_epoch(last_accessed,
+                                            TimeUnit.Microseconds),
 
                 # extras
                 container=container)
