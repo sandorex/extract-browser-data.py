@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from sqlite3 import Connection
 from typing import Type, Union, Optional, List, Iterator, Any
 from abc import ABC, abstractmethod
@@ -66,6 +68,9 @@ class Profile(ABC):
       Returns:
          ``None`` if a compatible class is not found
       """
+      if not os.path.isdir(path):
+         raise NotADirectoryError()
+
       for c in Profile.__subclasses__():
          if c.is_valid_profile(path):
             return c
