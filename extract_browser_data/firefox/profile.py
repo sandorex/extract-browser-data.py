@@ -15,12 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from pathlib import Path
 from typing import Union
 from os.path import join as join_path, isfile as file_exists
 from .reader import FirefoxReader
 from .writer import FirefoxWriter
-from .files import PLACES, COOKIES, EXTENSIONS, SESSIONSTORE
+from .files import PLACES, COOKIES, EXTENSIONS, SESSIONSTORE, LOCKFILE
 from ..profile import Profile
 
 
@@ -41,6 +43,27 @@ class FirefoxProfile(Profile):
       return True
 
    def is_profile_running(self) -> bool:
-      # firefox deletes 'sessionstore.jsonlz4' when it starts and it's created
-      # again when it quits, so i am using it as a lockfile
-      return not self.path.joinpath(SESSIONSTORE).is_file()
+      lockfile: Path = self.path.joinpath(LOCKFILE)
+      sessionstore: Path = self.path.joinpath(SESSIONSTORE)
+
+      # if it doesn't exist the profile surely isn't running
+      if not lockfile.exists():
+         return False
+
+      # i do not know why but sometime it can be a symlink, in that case use
+      # the fallback method, check if session file exists (it does only when
+      # firefox isn't running)
+      if lockfile.is_symlink():
+         return not sessionstore.exists()
+
+      try:
+         # TODO recreate the lockfile after removing it
+         os.remove(lockfile)
+      except PermissionError as err:
+         if 'The process cannot access the file because it is being used by another process:' in str(
+             err):
+            return True
+
+         raise err from None
+
+      return False

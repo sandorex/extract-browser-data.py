@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 PROFILES = 'profiles.ini'
 SESSIONSTORE = 'sessionstore.jsonlz4'
 EXTENSIONS = 'extensions.json'
@@ -22,3 +24,8 @@ PLACES = 'places.sqlite'
 COOKIES = 'cookies.sqlite'
 SIGNED_IN_USER = 'signedInUser.json'
 CONTAINERS = 'containers.json'
+
+if sys.platform in ['win32', 'cygwin']:
+   LOCKFILE = 'parent.lock'
+else:
+   LOCKFILE = '.parentlock'

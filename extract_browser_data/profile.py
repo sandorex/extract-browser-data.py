@@ -71,6 +71,7 @@ class Profile(ABC):
       if not os.path.isdir(path):
          raise NotADirectoryError()
 
+      c: 'Profile'
       for c in Profile.__subclasses__():
          if c.is_valid_profile(path):
             return c
