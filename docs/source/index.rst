@@ -1,7 +1,7 @@
 extract-browser-data.py
 =======================
 
-.. automodule:: extract_browser_data.profile
+.. automodule:: extract_browser_data.util
    :members:
 
 .. toctree::
