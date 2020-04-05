@@ -16,13 +16,32 @@
 # limitations under the License.
 
 import os
+import sys
 import sqlite3
 import tempfile
 import shutil
 
+from enum import Enum
 from sqlite3 import Connection
 from pathlib import Path
 from typing import Optional, Tuple, Union, Any
+
+
+class Platform(Enum):
+   '''Enum that represents the running platform'''
+   UNKNOWN = 'unknown'
+   WIN32 = 'win32'
+   LINUX = 'linux'
+   MACOS = 'darwin'
+
+   @classmethod
+   def _missing_(cls, _value):
+      return cls.UNKNOWN
+
+
+def platform() -> Platform:
+   '''Returns the running platform'''
+   return Platform(sys.platform)
 
 
 class UnsupportedSchema(RuntimeError):

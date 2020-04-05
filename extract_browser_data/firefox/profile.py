@@ -15,20 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 from os.path import join as join_path, isfile as file_exists
+from ..profile import Profile
 from .reader import FirefoxReader
 from .writer import FirefoxWriter
-from .files import PLACES, COOKIES, EXTENSIONS, SESSIONSTORE, LOCKFILE
-from ..profile import Profile
+from .files import PLACES, COOKIES, EXTENSIONS
+from . import functions as func
 
 
 class FirefoxProfile(Profile):
    """Profile for Firefox-based browsers"""
-   def __init__(self, name: str, path: Union[str, Path], default: bool = False):
+   def __init__(self,
+                name: Optional[str],
+                path: Union[str, Path],
+                default: bool = False):
       super().__init__(name, path, FirefoxReader, FirefoxWriter)
 
       self.default = default
@@ -43,27 +45,4 @@ class FirefoxProfile(Profile):
       return True
 
    def is_profile_running(self) -> bool:
-      lockfile: Path = self.path.joinpath(LOCKFILE)
-      sessionstore: Path = self.path.joinpath(SESSIONSTORE)
-
-      # if it doesn't exist the profile surely isn't running
-      if not lockfile.exists():
-         return False
-
-      # i do not know why but sometime it can be a symlink, in that case use
-      # the fallback method, check if session file exists (it does only when
-      # firefox isn't running)
-      if lockfile.is_symlink():
-         return not sessionstore.exists()
-
-      try:
-         # TODO recreate the lockfile after removing it
-         os.remove(lockfile)
-      except PermissionError as err:
-         if 'The process cannot access the file because it is being used by another process:' in str(
-             err):
-            return True
-
-         raise err from None
-
-      return False
+      return func.is_profile_running(self.path)

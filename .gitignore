@@ -28,6 +28,7 @@ share/python-wheels/
 MANIFEST
 
 # Environments
+.tox
 .env
 .venv
 env/
@@ -35,6 +36,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+/cache/
 
 # mypy
 .mypy_cache/

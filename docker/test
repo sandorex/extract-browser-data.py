@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# shellcheck source=./python-setup
+source "$DIR"/python-setup
+
+if [ -z "$1" ]; then
+   # test general tests
+   python3 -m pytest -m 'not browser' ./tests/
+else
+   # test specific tests
+   python3 -m pytest -m "$*" ./tests/
+fi

@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FIREFOX_LOGFILE=/tmp/firefox.log
+
+# shellcheck source=../globals
+source "$DIR"/../globals
+
+# shellcheck source=../python-setup
+source "$DIR"/../python-setup
+
+# shellcheck source=../xorg-setup
+source "$DIR"/../xorg-setup
+
+# make a copy of the profile
+sudo cp -r "$PROFILE" "$PROFILE_COPY"
+sudo chown -R user:user "$PROFILE_COPY"
+
+# setup the trap to print logs on error
+function _err() {
+   print_logfile "$FIREFOX_LOGFILE" "Firefox log output"
+}
+trap _err ERR
+
+echo ":: Testing Firefox profile state detection"
+
+# running it before to ensure the profile isn't corrupted or something
+python3 -m pytest tests/firefox/test_detection.py::test_ff_not_running \
+                  --docker -v \
+                  --profile="$PROFILE_COPY" || true
+
+echo "Launching Firefox"
+"$DIR"/../firefox-wrapper -profile "$PROFILE_COPY" &> "$FIREFOX_LOGFILE" &
+PID=$!
+
+# delay for firefox to start properly
+sleep 2
+
+# ensure firefox is still running
+if ! kill -0 $PID &> /dev/null; then
+   echo "Firefox has quit unexpectedly"
+   exit 1
+fi
+
+python3 -m pytest tests/firefox/test_detection.py::test_ff_running \
+                  --docker -v \
+                  --profile="$PROFILE_COPY"
+
+# tell the wrapper to kill firefox
+kill $PID
+echo "Waiting for Firefox to quit"
+
+COUNTER=0
+while kill -0 $PID &> /dev/null; do
+   sleep 1
+   COUNTER=$(( COUNTER + 1 ))
+
+   if [ "$COUNTER" -gt "$TIMEOUT" ]; then
+      echo "Firefox has taken longer than $TIMEOUT seconds to quit, aborting the test.."
+      exit 1
+   fi
+done
+
+# wait just in case
+wait $PID
+
+python3 -m pytest tests/firefox/test_detection.py::test_ff_not_running \
+                  --docker -v \
+                  --profile="$PROFILE_COPY"

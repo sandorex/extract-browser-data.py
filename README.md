@@ -1,8 +1,6 @@
 # extract-browser-data.py
 Python library to extract data from browsers (only chromium and firefox based ones)
 
-**This readme is for the library, for the utility click [here](./extract_browser_data/app/README.md)**
-
 > **WARNING: this library is in it's alpha stage**
 
 ## Cross-Browser Compatability

@@ -14,11 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint: disable=missing-function-docstring
 
 import json
 import datetime
 import re
 
+from enum import Enum
 from pathlib import Path
 from typing import Dict, Iterator, Any, List, Optional, Union
 from os.path import isfile as file_exists
@@ -27,10 +29,31 @@ from .util import dt_from_epoch, TimeUnit, open_lz4
 from ..common import Extension, URLVisit, Bookmark, Cookie
 
 
+class ProfileState(Enum):
+   '''Represents current state of the profile'''
+   CLOSED = 1
+   RUNNING = 2
+   UNKNOWN = 3
+
+
+# import platform specific functions
+if util.platform() != util.Platform.WIN32:
+   from ._functions_unix import read_profile_state  # pylint: disable=unused-import
+# else:
+#    from ._functions_win32 import read_profile_state # pylint: disable=unused-import
+
+
+def is_profile_running(path: Union[str, Path]) -> bool:
+   # unknown should be detected as running cause it may cause issues when the
+   # data is modified after a crash
+   return read_profile_state(path) != ProfileState.CLOSED
+
+
 # FIREFOX #
 def read_containers(file: Union[str, Path]) -> Iterator[Dict[str, Any]]:
    if not file_exists(file):
-      return iter([])
+      yield
+      return
 
    with open(file) as fd:
       data = json.load(fd)
@@ -49,6 +72,8 @@ def read_containers(file: Union[str, Path]) -> Iterator[Dict[str, Any]]:
          }
 
 
+# TODO if not at root of the profile it can also be found in sessionstore-backups/previous.jsonlz4, also check out sessionstore-backups/recovery.jsonlz4
+# TODO make class for windows and tabs and also read on chromium
 def read_last_session(
     file: Union[str, Path]) -> Optional[List[List[Dict[str, Any]]]]:
    if not file_exists(file):

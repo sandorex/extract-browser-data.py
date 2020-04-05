@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 from extract_browser_data import VERSION
 
 setup(
@@ -10,9 +10,5 @@ setup(
     license='Apache',
     author='Sandorex',
     author_email='rzhw3h@gmail.com',
-    packages=['extract_browser_data'],
-    install_requires=[
-        x.strip() for x in open('requirements.txt').readlines()
-        if x and not x.startswith('#')
-    ],
+    packages=find_packages(exclude=['tests']),
     python_requires='>=3.6')

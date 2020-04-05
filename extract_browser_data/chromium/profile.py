@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Union
+from typing import Union, Optional
 from pathlib import Path
 from os.path import join as join_path, isfile as file_exists
 from .. import util
@@ -28,7 +28,7 @@ from .files import (PREFERENCES, HISTORY, LOGIN_DATA, WEB_DATA, COOKIES,
 
 class ChromiumProfile(Profile):
    """Profile for Chromium-based browsers"""
-   def __init__(self, name: str, path: Union[str, Path]):
+   def __init__(self, name: Optional[str], path: Union[str, Path]):
       super().__init__(name, path, ChromiumReader, ChromiumWriter)
 
    @classmethod

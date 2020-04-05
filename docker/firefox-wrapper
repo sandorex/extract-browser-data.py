@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# wrapper script that allows peaceful termination of firefox from terminal using
+# signals HUP, QUIT and TERM
+
+set -e
+
+firefox "$@" &
+PID=$!
+
+sleep 2
+
+# search all window ids and check which is valid window id
+ID=
+IDS=$(xdotool search --onlyvisible --pid "$PID" | xargs)
+for i in $IDS; do
+   if xdotool getwindowname "$i" &> /dev/null; then
+      ID=$i
+      break
+   fi
+done
+
+if [ -z "$ID" ]; then
+   echo "Couldn't get the window id of Firefox"
+   exit 1
+fi
+
+function _quit() {
+   echo "Qutting Firefox"
+
+   # focus firefox
+   xdotool windowactivate --sync "$ID"
+   sleep 0.5
+
+   # tell it to quit
+   xdotool key --clearmodifiers ctrl+q
+   sleep 0.5
+
+   # accept when it asks to close multiple tabs
+   xdotool key Return
+
+   # wait for it
+   wait $PID
+
+   # exit with different code than the signal caught
+   # shellcheck disable=SC2064
+   trap "exit $?" EXIT
+}
+trap _quit SIGHUP SIGQUIT SIGTERM
+
+wait $PID

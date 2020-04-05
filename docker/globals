@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+set -e
+
+# timeout in seconds
+export TIMEOUT=10
+
+if command -v firefox &> /dev/null; then
+   FIREFOX_PLATFORM_FILE=/usr/lib/firefox/platform.ini
+
+   FIREFOX_BUILDID=$(grep BuildID "$FIREFOX_PLATFORM_FILE")
+   FIREFOX_BUILDID=${FIREFOX_BUILDID#*=}
+   export FIREFOX_BUILDID
+
+   FIREFOX_VERSION=$(grep Milestone "$FIREFOX_PLATFORM_FILE")
+   FIREFOX_VERSION=${FIREFOX_VERSION#*=}
+   export FIREFOX_VERSION
+
+   export FIREFOX_VERSION_FULL="${FIREFOX_VERSION}_${FIREFOX_BUILDID}"
+fi
+
+if command -v chromium-browser &> /dev/null; then
+   CHROMIUM_VERSION=$(chromium-browser --version)
+   CHROMIUM_VERSION=${CHROMIUM_VERSION#* }
+   CHROMIUM_VERSION=${CHROMIUM_VERSION#* }
+   export CHROMIUM_VERSION
+
+   export CHROMIUM_VERSION_INTEGER=${CHROMIUM_VERSION//./}
+
+   export PROFILE=/profile
+   export PROFILE_COPY=/profile-copy
+fi
+
+function has_firefox() {
+   [ -n "$FIREFOX_VERSION" ]
+}
+
+function has_chromium() {
+   [ -n "$CHROMIUM_VERSION" ]
+}
+
+function br() {
+   printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+}
+
+function print_logfile() {
+   FILE=$1
+   shift
+   if [ -f "$FILE" ] && [ -s "$FILE" ]; then
+      br
+      for i in "$@"; do
+         echo "$i"
+      done
+      br
+      cat "$FILE"
+      br
+   fi
+}

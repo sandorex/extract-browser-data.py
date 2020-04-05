@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+set -e
+
+XVFB_LOGFILE=/tmp/xvfb.log
+FLUXBOX_LOGFILE=/tmp/fluxbox.log
+
+# setup the trap to print logs on error
+function _err() {
+   print_logfile "$XVFB_LOGFILE" "Xvfb log output"
+   echo
+   print_logfile "$FLUXBOX_LOGFILE" "Fluxbox log output"
+}
+trap _err ERR
+
+echo "Starting Xvfb"
+Xvfb :99 -screen 0 1280x1024x24 &> "$XVFB_LOGFILE" &
+export DISPLAY=:99
+
+# wait for xvfb to start
+COUNTER=0
+until xdpyinfo &> /dev/null; do
+   sleep 1
+   COUNTER=$(( COUNTER + 1 ))
+
+   if [ "$COUNTER" -gt "$TIMEOUT" ]; then
+      echo "Xvfb has not started after $TIMEOUT seconds, aborting the test.."
+      exit 1
+   fi
+done
+
+echo "Starting Fluxbox"
+fluxbox &> "$FLUXBOX_LOGFILE" &
+
+# wait for fluxbox to start
+COUNTER=0
+until wmctrl -m &> /dev/null; do
+   sleep 1
+   COUNTER=$(( COUNTER + 1 ))
+
+   if [ "$COUNTER" -gt "$TIMEOUT" ]; then
+      echo "Fluxbox has not started after $TIMEOUT seconds, aborting the test.."
+      exit 1
+   fi
+done
+
+# remove the trap
+trap - ERR
+unset _err
