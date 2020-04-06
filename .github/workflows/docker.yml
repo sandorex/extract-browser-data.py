@@ -3,10 +3,12 @@ on:
   push:
     paths:
       - '.github/workflows/docker.yml'
-      - 'docker/**'
+      - 'docker/entrypoint.sh'
+      - 'docker/build.sh'
+      - 'docker/Dockerfile'
   schedule:
-    # run everyday at 12:00
-    - cron: '0 12 * * */1'
+    # run everyday at 00:00
+    - cron: '0 0 * * *'
 
 jobs:
   build:
