@@ -1,40 +1,12 @@
 version: "3.7"
 services:
-  cache:
-    volumes:
-      - .:/project
-      - ./cache:/env
-    image: ebd-test-image
-    build:
-      context: ./docker
-    entrypoint: [ "/entrypoint.sh", "cache" ]
-
-  firefox:
-    volumes:
-      - .:/project
-      - ./cache:/env
-      - ./tests/firefox/profile:/profile
-    image: ebd-test-image
-    build:
-      context: ./docker
-    entrypoint: [ "/entrypoint.sh", "firefox" ]
-
-  chrome:
-    volumes:
-      - .:/project
-      - ./cache:/env
-      - ./tests/firefox/profile:/profile
-    image: ebd-test-image
-    build:
-      context: ./docker
-    entrypoint: [ "/entrypoint.sh", "chromium" ]
-
   test:
     volumes:
       - .:/project
       - ./cache:/env
-    image: ebd-test-image
+      - ./tests/firefox/profile:/profile
+    image: quay.io/sandorex/ebd-test-image
     build:
       context: ./docker
-    entrypoint: [ "/entrypoint.sh", "test" ]
-
+    entrypoint: [ "/entrypoint.sh" ]
+    command: [ "test" ]

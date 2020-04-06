@@ -5,6 +5,12 @@ set -e
 # timeout in seconds
 export TIMEOUT=10
 
+# profile volume path
+export PROFILE=/profile
+
+# profile copy path
+export PROFILE_COPY=/profile-copy
+
 if command -v firefox &> /dev/null; then
    FIREFOX_PLATFORM_FILE=/usr/lib/firefox/platform.ini
 
@@ -22,13 +28,10 @@ fi
 if command -v chromium-browser &> /dev/null; then
    CHROMIUM_VERSION=$(chromium-browser --version)
    CHROMIUM_VERSION=${CHROMIUM_VERSION#* }
-   CHROMIUM_VERSION=${CHROMIUM_VERSION#* }
+   CHROMIUM_VERSION=${CHROMIUM_VERSION%% *}
    export CHROMIUM_VERSION
 
    export CHROMIUM_VERSION_INTEGER=${CHROMIUM_VERSION//./}
-
-   export PROFILE=/profile
-   export PROFILE_COPY=/profile-copy
 fi
 
 function has_firefox() {

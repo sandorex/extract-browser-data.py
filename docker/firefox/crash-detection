@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+FIREFOX_LOGFILE=/tmp/firefox.log
+
+# shellcheck source=../globals
+source "$DIR"/../globals
+
+# shellcheck source=../python-setup
+source "$DIR"/../python-setup
+
+# make a directory for the new profile
+sudo mkdir -p "$PROFILE_COPY"
+sudo chown -R user:user "$PROFILE_COPY"
+
+# setup the trap to print logs on error
+function _err() {
+   print_logfile "$FIREFOX_LOGFILE" "Firefox log output"
+}
+trap _err ERR
+
+echo ":: Testing Firefox profile crash detection"
+
+echo "Launching Firefox"
+firefox -headless -profile "$PROFILE_COPY" &> "$FIREFOX_LOGFILE" &
+PID=$!
+disown
+
+# delay for firefox to start properly
+sleep 2
+
+# ensure firefox is still running
+if ! kill -0 $PID &> /dev/null; then
+   echo "Firefox has quit unexpectedly"
+   exit 1
+fi
+
+# kill it without allowing it to quit nicely to emulate a crash
+kill -KILL $PID
+echo "Killing Firefox"
+
+python3 -m pytest tests/firefox/test_detection.py::test_ff_crashed \
+                  --docker -v \
+                  --profile="$PROFILE_COPY"

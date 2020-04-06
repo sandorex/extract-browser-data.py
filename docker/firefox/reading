@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# shellcheck source=../globals
+source "$DIR"/../globals
+
+# shellcheck source=../python-setup
+source "$DIR"/../python-setup
+
+# make a copy of the profile
+sudo cp -r "$PROFILE" "$PROFILE_COPY"
+sudo chown -R user:user "$PROFILE_COPY"
+
+echo ":: Testing Firefox profile reading"
+
+python3 -m pytest -m 'reading and firefox' \
+                  --docker \
+                  --profile="$PROFILE_COPY"

@@ -20,23 +20,18 @@ sudo chown -R user:user "$PROFILE_COPY"
 
 # setup the trap to print logs on error
 function _err() {
-   print_logfile "$FIREFOX_LOGFILE" "Firefox log output"
+   print_logfile "$FIREFOX_LOGFILE" "Firefox wrapper log output"
 }
 trap _err ERR
 
 echo ":: Testing Firefox profile state detection"
-
-# running it before to ensure the profile isn't corrupted or something
-python3 -m pytest tests/firefox/test_detection.py::test_ff_not_running \
-                  --docker -v \
-                  --profile="$PROFILE_COPY" || true
 
 echo "Launching Firefox"
 "$DIR"/../firefox-wrapper -profile "$PROFILE_COPY" &> "$FIREFOX_LOGFILE" &
 PID=$!
 
 # delay for firefox to start properly
-sleep 2
+sleep 3
 
 # ensure firefox is still running
 if ! kill -0 $PID &> /dev/null; then

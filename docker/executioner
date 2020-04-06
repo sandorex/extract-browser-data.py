@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# NOTE THIS SCRIPT IS RAN AS ROOT!!
+
+set -e
+
+DIR=$1
+shift
+
+# ensure user owns the directory and all scripts are executable
+mkdir -p "$DIR"
+chown -R user:user .
+chmod -R +x "$DIR"
+
+# shellcheck source=./globals
+source "$DIR"/globals
+
+TARGET=${1:-general}
+shift
+case "$TARGET" in
+   cache)
+      # caches the virtualenv (used in the CI to speed things up)
+      # shellcheck source=./python-setup
+      source "$DIR"/python-setup
+      exit
+      ;;
+   firefox)
+      if ! has_firefox; then
+         echo "Firefox not found, cannot run the test"
+         exit 1
+      fi
+
+      ARG=${1:-general}
+      shift || true
+
+      if [ ! -f "$DIR"/firefox/"$ARG" ]; then
+         echo "Firefox test script '$ARG' does not exist"
+         exit 1
+      fi
+
+      # runs firefox test script
+      echo ":: Executing Firefox test script '$ARG'"
+      echo "Using Firefox $FIREFOX_VERSION_FULL"
+      exec sudo -u user "$DIR"/firefox/"$ARG" "$@"
+      ;;
+   chrome|google-chrome|chromium)
+      if ! has_chromium; then
+         echo "Chromium not found, cannot run the test"
+         exit 1
+      fi
+
+      ARG=${1:-general}
+      shift || true
+
+      if [ ! -f "$DIR"/chromium/"$ARG" ]; then
+         echo "Firefox test script '$ARG' does not exist"
+         exit 1
+      fi
+
+      # runs chromium test script
+      echo ":: Executing Chromium test script '$ARG'"
+      exec sudo -u user "$DIR"/chromium/"$ARG" "$@"
+      ;;
+   test|general)
+      # run general test script
+      echo ":: Executing the general test script"
+      exec sudo -u user "$DIR"/test "$@"
+      ;;
+   *)
+      echo "Invalid test script '$TARGET'"
+      ;;
+esac
