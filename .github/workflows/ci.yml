@@ -59,5 +59,5 @@ jobs:
           key: venv-linux-${{ hashFiles('**/requirements.txt') }}
       - name: Run the test
         run: |
-	        sudo docker-compose pull
+          sudo docker-compose pull
           sudo docker-compose run test
