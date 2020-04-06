@@ -6,4 +6,5 @@
 # run shell if needed
 [[ "$1" =~ bash|shell|sh ]] && exec sudo -u user /bin/bash
 
+chmod +x "$PWD"/docker/executioner
 "$PWD"/docker/executioner "$PWD/docker" "$@"
