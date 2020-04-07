@@ -22,8 +22,20 @@ from os.path import isfile as file_exists
 from pathlib import Path
 from typing import List, Iterator, Optional, Union
 from .. import util
-from ..common import Extension, URLVisit, Bookmark, Cookie
+from ..common import ProfileState, Extension, URLVisit, Bookmark, Cookie
 from .util import dt_from_webkit_epoch
+
+# import platform specific functions
+if util.platform() != util.Platform.WIN32:
+   from ._functions_unix import read_profile_state  # pylint: disable=unused-import
+# else:
+#    from ._functions_win32 import read_profile_state # pylint: disable=unused-import
+
+
+def is_profile_running(path: Union[str, Path]) -> bool:
+   # unknown should be detected as running cause it may cause issues when the
+   # data is modified after a crash
+   return read_profile_state(path) != ProfileState.CLOSED
 
 
 def read_extensions(file: Union[str, Path]) -> List[Extension]:

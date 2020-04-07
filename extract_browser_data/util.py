@@ -197,3 +197,8 @@ def open_database(path: Union[str, Path],
       conn = sqlite3.connect(path, isolation_level='EXCLUSIVE')
 
    return conn
+
+
+# import os specific functions
+if platform() != Platform.WIN32:
+   from .__util_unix import is_process_running  # pylint: disable=unused-import

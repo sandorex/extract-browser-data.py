@@ -15,15 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Union, Optional
+from os.path import isfile as file_exists
+from os.path import join as join_path
 from pathlib import Path
-from os.path import join as join_path, isfile as file_exists
-from .. import util
+from typing import Optional, Union
+
 from ..profile import Profile
+from . import functions as func
+from .files import (BOOKMARKS, COOKIES, HISTORY, LOGIN_DATA, PREFERENCES,
+                    SECURE_PREFERENCES, WEB_DATA)
 from .reader import ChromiumReader
 from .writer import ChromiumWriter
-from .files import (PREFERENCES, HISTORY, LOGIN_DATA, WEB_DATA, COOKIES,
-                    SECURE_PREFERENCES, BOOKMARKS)
 
 
 class ChromiumProfile(Profile):
@@ -44,10 +46,4 @@ class ChromiumProfile(Profile):
       return True
 
    def is_profile_running(self) -> bool:
-      # chromium locks databases when it's running, so i am using that
-      # TODO test reliability
-      for file in [LOGIN_DATA, WEB_DATA, COOKIES]:
-         if util.is_database_locked(self.path.joinpath(file)):
-            return True
-
-      return False
+      return func.is_profile_running(self.path)

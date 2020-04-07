@@ -3,7 +3,6 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-FIREFOX_LOGFILE=/tmp/firefox.log
 
 # shellcheck source=../globals
 source "$DIR"/../globals
@@ -14,9 +13,7 @@ source "$DIR"/../python-setup
 # shellcheck source=../xorg-setup
 source "$DIR"/../xorg-setup
 
-# make a copy of the profile
-sudo cp -r "$PROFILE" "$PROFILE_COPY"
-sudo chown -R user:user "$PROFILE_COPY"
+copy_profile
 
 # setup the trap to print logs on error
 function _err() {
@@ -27,7 +24,7 @@ trap _err ERR
 echo ":: Testing Firefox profile state detection"
 
 echo "Launching Firefox"
-"$DIR"/../firefox-wrapper -profile "$PROFILE_COPY" &> "$FIREFOX_LOGFILE" &
+"$DIR"/../firefox-wrapper -profile "$PROFILE" &> "$FIREFOX_LOGFILE" &
 PID=$!
 
 # delay for firefox to start properly
@@ -41,7 +38,7 @@ fi
 
 python3 -m pytest tests/firefox/test_detection.py::test_ff_running \
                   --docker -v \
-                  --profile="$PROFILE_COPY"
+                  --profile="$PROFILE"
 
 # tell the wrapper to kill firefox
 kill $PID
@@ -63,4 +60,4 @@ wait $PID
 
 python3 -m pytest tests/firefox/test_detection.py::test_ff_not_running \
                   --docker -v \
-                  --profile="$PROFILE_COPY"
+                  --profile="$PROFILE"

@@ -3,7 +3,6 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-FIREFOX_LOGFILE=/tmp/firefox.log
 COMP_FILE=compatibility.ini
 CI_UPDATED_OUTPUT=updated
 
@@ -16,10 +15,10 @@ function _err() {
 }
 trap _err ERR
 
-if [ -f "$PROFILE/$COMP_FILE" ]; then
+if [ -f "$PROFILE_VOLUME/$COMP_FILE" ]; then
    echo ":: Updating the profile"
 
-   PROFILE_BUILDID=$(grep LastVersion "$PROFILE/$COMP_FILE")
+   PROFILE_BUILDID=$(grep LastVersion "$PROFILE_VOLUME/$COMP_FILE")
    PROFILE_BUILDID=${PROFILE_BUILDID#*/}
    if [[ ( "$FIREFOX_BUILDID" > "$PROFILE_BUILDID" ) ]]; then
       echo "$PROFILE_BUILDID -> $FIREFOX_BUILDID"
@@ -43,7 +42,7 @@ fi
 source "$DIR"/../xorg-setup
 
 echo "Launching Firefox"
-"$DIR"/../firefox-wrapper -profile "$PROFILE" &> "$FIREFOX_LOGFILE" &
+"$DIR"/../firefox-wrapper -profile "$PROFILE_VOLUME" &> "$FIREFOX_LOGFILE" &
 PID=$!
 
 # delay for firefox to start properly
@@ -55,6 +54,7 @@ if ! kill -0 $PID &> /dev/null; then
    exit 1
 fi
 
+# tell the wrapper to kill firefox
 kill $PID
 echo "Waiting for Firefox to quit"
 

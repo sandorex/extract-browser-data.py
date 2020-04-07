@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# shellcheck source=../globals
+source "$DIR"/../globals
+
+# shellcheck source=../python-setup
+source "$DIR"/../python-setup
+
+# shellcheck source=../xorg-setup
+source "$DIR"/../xorg-setup
+
+copy_profile
+
+# setup the trap to print logs on error
+function _err() {
+   print_logfile "$CHROMIUM_LOGFILE" "Chromium log output"
+}
+trap _err ERR
+
+echo ":: Testing Chromium profile state detection"
+
+echo "Launching Chromium"
+chromium-browser --disable-gpu \
+                 --no-sandbox \
+                 --user-data-dir="$CHROMIUM_USER_DIR" \
+                 &> "$CHROMIUM_LOGFILE" &
+PID=$!
+
+# delay for chromium to start properly
+sleep 2
+
+# search all window ids and check which is valid window id
+ID=
+IDS=$(xdotool search --onlyvisible --pid "$PID" | xargs)
+for i in $IDS; do
+   if xdotool getwindowname "$i" &> /dev/null; then
+      ID=$i
+      break
+   fi
+done
+unset IDS
+
+if [ -z "$ID" ]; then
+   echo "Couldn't get the window id of Chromium"
+   exit 1
+fi
+
+# ensure chromium is still running
+if ! kill -0 $PID &> /dev/null; then
+   echo "Chromium has quit unexpectedly"
+   exit 1
+fi
+
+python3 -m pytest tests/chromium/test_detection.py::test_ch_running \
+                  --docker -v \
+                  --profile="$CHROMIUM_USER_DIR/$CHROMIUM_PROFILE"
+
+# tell chromium to terminate
+wmctrl -ic "$ID"
+echo "Waiting for Chromium to quit"
+
+COUNTER=0
+while kill -0 $PID &> /dev/null; do
+   sleep 1
+   COUNTER=$(( COUNTER + 1 ))
+
+   if [ "$COUNTER" -gt "$TIMEOUT" ]; then
+      echo "Chromium has taken longer than $TIMEOUT seconds to quit, aborting the test.."
+      exit 1
+   fi
+done
+
+# wait just in case
+wait $PID
+
+python3 -m pytest tests/chromium/test_detection.py::test_ch_not_running \
+                  --docker -v \
+                  --profile="$CHROMIUM_USER_DIR/$CHROMIUM_PROFILE"

@@ -4,9 +4,28 @@ services:
     volumes:
       - .:/project
       - ./cache:/env
-      - ./tests/firefox/profile:/profile
     image: quay.io/sandorex/ebd-test-image
     build:
       context: ./docker
     entrypoint: [ "/entrypoint.sh" ]
     command: [ "test" ]
+
+  firefox:
+    volumes:
+      - .:/project
+      - ./cache:/env
+      - ./tests/firefox/profile:/profile
+    image: quay.io/sandorex/ebd-test-image
+    build:
+      context: ./docker
+    entrypoint: [ "/entrypoint.sh", "firefox" ]
+
+  chromium:
+    volumes:
+      - .:/project
+      - ./cache:/env
+      - ./tests/chromium/profile:/profile/Default
+    image: quay.io/sandorex/ebd-test-image
+    build:
+      context: ./docker
+    entrypoint: [ "/entrypoint.sh", "chromium" ]

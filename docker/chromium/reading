@@ -12,8 +12,8 @@ source "$DIR"/../python-setup
 
 copy_profile
 
-echo ":: Testing Firefox profile reading"
+echo ":: Testing Chromium profile reading"
 
-python3 -m pytest -m 'reading and firefox' \
+python3 -m pytest -m 'reading and chromium' \
                   --docker \
                   --profile="$PROFILE"

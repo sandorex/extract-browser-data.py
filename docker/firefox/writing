@@ -10,12 +10,10 @@ source "$DIR"/../globals
 # shellcheck source=../python-setup
 source "$DIR"/../python-setup
 
-# make a copy of the profile
-sudo cp -r "$PROFILE" "$PROFILE_COPY"
-sudo chown -R user:user "$PROFILE_COPY"
+copy_profile
 
 echo ":: Testing Firefox profile writing"
 
 python3 -m pytest -m 'writing and firefox' \
                   --docker \
-                  --profile="$PROFILE_COPY"
+                  --profile="$PROFILE"

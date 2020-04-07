@@ -15,14 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os.path import isfile as file_exists
+from os.path import join as join_path
 from pathlib import Path
-from typing import Union, Optional
-from os.path import join as join_path, isfile as file_exists
+from typing import Optional, Union
+
 from ..profile import Profile
+from . import functions as func
+from .files import COOKIES, EXTENSIONS, PLACES
 from .reader import FirefoxReader
 from .writer import FirefoxWriter
-from .files import PLACES, COOKIES, EXTENSIONS
-from . import functions as func
 
 
 class FirefoxProfile(Profile):

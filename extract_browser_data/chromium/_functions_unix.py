@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''Unix only functions for Firefox browser'''
+'''Unix only functions for Chromium browser'''
 
 import os
 
@@ -23,16 +23,16 @@ from typing import Optional, Union
 from .. import util
 from .functions import ProfileState
 
-LOCKFILE = 'lock'
+LOCKFILE = 'SingletonLock'
 
 
 def _read_pid_from_lockfile(path: Union[str, Path]) -> Optional[int]:
-   '''Reads pid from firefox lockfile'''
+   '''Reads pid from chromium lockfile'''
    link_target = os.readlink(path)
 
    try:
-      # the link points to 'IP:+PID'
-      return link_target[link_target.index(':') + 2:]
+      # the link points to 'HOSTNAME-PID'
+      return link_target[link_target.index('-') + 1:]
    except IndexError:
       pass
 
@@ -40,7 +40,8 @@ def _read_pid_from_lockfile(path: Union[str, Path]) -> Optional[int]:
 
 
 def read_profile_state(path: Union[str, Path]) -> ProfileState:
-   lockfile_path = Path(path) / LOCKFILE
+   # the lockfile is in the data dir not the profile
+   lockfile_path = Path(path).parent / LOCKFILE
 
    # if the lockfile does not exist then it's probably closed
    if not lockfile_path.is_symlink():

@@ -16,8 +16,16 @@
 # limitations under the License.
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 
+from enum import Enum
 from datetime import datetime
 from typing import Dict, Any, Optional, List
+
+
+class ProfileState(Enum):
+   '''Represents current state of the profile'''
+   CLOSED = 1
+   RUNNING = 2
+   UNKNOWN = 3
 
 
 class Extension:

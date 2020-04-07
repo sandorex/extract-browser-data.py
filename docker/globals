@@ -6,10 +6,19 @@ set -e
 export TIMEOUT=10
 
 # profile volume path
-export PROFILE=/profile
+export PROFILE_VOLUME=/profile
 
-# profile copy path
-export PROFILE_COPY=/profile-copy
+# path to copy of the profile
+export PROFILE=/profile-rw
+
+# user directory for chromium profile
+export CHROMIUM_USER_DIR=$PROFILE
+
+# default chromium profile name
+export CHROMIUM_PROFILE=Default
+
+export FIREFOX_LOGFILE=/tmp/firefox.log
+export CHROMIUM_LOGFILE=/tmp/chromium.log
 
 if command -v firefox &> /dev/null; then
    FIREFOX_PLATFORM_FILE=/usr/lib/firefox/platform.ini
@@ -58,4 +67,10 @@ function print_logfile() {
       cat "$FILE"
       br
    fi
+}
+
+function copy_profile() {
+   # make a copy of the profile
+   sudo cp -r "$PROFILE_VOLUME" "$PROFILE"
+   sudo chown -R user:user "$PROFILE"
 }

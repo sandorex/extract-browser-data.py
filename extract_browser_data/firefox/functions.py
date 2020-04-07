@@ -20,21 +20,12 @@ import json
 import datetime
 import re
 
-from enum import Enum
 from pathlib import Path
 from typing import Dict, Iterator, Any, List, Optional, Union
 from os.path import isfile as file_exists
 from .. import util
 from .util import dt_from_epoch, TimeUnit, open_lz4
-from ..common import Extension, URLVisit, Bookmark, Cookie
-
-
-class ProfileState(Enum):
-   '''Represents current state of the profile'''
-   CLOSED = 1
-   RUNNING = 2
-   UNKNOWN = 3
-
+from ..common import ProfileState, Extension, URLVisit, Bookmark, Cookie
 
 # import platform specific functions
 if util.platform() != util.Platform.WIN32:

@@ -35,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         test: [ 'state-detection', 'crash-detection', 'reading', 'writing', 'general' ]
-        browser: [ 'firefox' ]
+        browser: [ 'firefox', 'chromium' ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v1
@@ -45,7 +45,7 @@ jobs:
       - name: Run the test
         run: |
           sudo docker-compose pull
-          sudo docker-compose run test ${{ matrix.browser }} ${{ matrix.test }}
+          sudo docker-compose run ${{ matrix.browser }} ${{ matrix.test }}
 
   linux-general-tests:
     runs-on: ubuntu-latest
