@@ -36,7 +36,7 @@ if ! kill -0 $PID &> /dev/null; then
    exit 1
 fi
 
-python3 -m pytest tests/firefox/test_detection.py::test_ff_running \
+python3 -m pytest tests/firefox/test_ff_detection.py::test_ff_running \
                   --docker -v \
                   --profile="$PROFILE"
 
@@ -58,6 +58,6 @@ done
 # wait just in case
 wait $PID
 
-python3 -m pytest tests/firefox/test_detection.py::test_ff_not_running \
+python3 -m pytest tests/firefox/test_ff_detection.py::test_ff_not_running \
                   --docker -v \
                   --profile="$PROFILE"

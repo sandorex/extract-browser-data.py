@@ -38,6 +38,6 @@ fi
 kill -KILL $PID
 echo "Killing Firefox"
 
-python3 -m pytest tests/firefox/test_detection.py::test_ff_crashed \
+python3 -m pytest tests/firefox/test_ff_detection.py::test_ff_crashed \
                   --docker -v \
                   --profile="$PROFILE"

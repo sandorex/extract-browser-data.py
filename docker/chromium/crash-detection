@@ -44,6 +44,6 @@ fi
 kill -KILL $PID
 echo "Killing Chromium"
 
-python3 -m pytest tests/chromium/test_detection.py::test_ch_crashed \
+python3 -m pytest tests/chromium/test_ch_detection.py::test_ch_crashed \
                   --docker -v \
                   --profile="$CHROMIUM_USER_DIR/$CHROMIUM_PROFILE"

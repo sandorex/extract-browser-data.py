@@ -55,7 +55,7 @@ if ! kill -0 $PID &> /dev/null; then
    exit 1
 fi
 
-python3 -m pytest tests/chromium/test_detection.py::test_ch_running \
+python3 -m pytest tests/chromium/test_ch_detection.py::test_ch_running \
                   --docker -v \
                   --profile="$CHROMIUM_USER_DIR/$CHROMIUM_PROFILE"
 
@@ -77,6 +77,6 @@ done
 # wait just in case
 wait $PID
 
-python3 -m pytest tests/chromium/test_detection.py::test_ch_not_running \
+python3 -m pytest tests/chromium/test_ch_detection.py::test_ch_not_running \
                   --docker -v \
                   --profile="$CHROMIUM_USER_DIR/$CHROMIUM_PROFILE"
