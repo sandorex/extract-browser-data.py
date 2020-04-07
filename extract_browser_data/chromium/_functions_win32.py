@@ -14,16 +14,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''Unix only functions for Firefox browser'''
+'''Windows only functions for Firefox browser'''
 
 from pathlib import Path
 from typing import Union
 from .. import functions
 from ..common import ProfileState
-from .files import LOCKFILE_UNIX as LOCKFILE
+from .files import LOCKFILE_WIN32 as LOCKFILE
 
 
 def read_profile_state(path: Union[str, Path]) -> ProfileState:
-   # the link points to 'IP:+PID' for firefox
    return functions.read_profile_state_from_lockfile(
-       Path(path) / LOCKFILE, r'.*:\+([0-9]+)')
+       Path(path).parent / LOCKFILE)

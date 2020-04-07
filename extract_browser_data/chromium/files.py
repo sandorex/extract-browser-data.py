@@ -22,3 +22,6 @@ WEB_DATA = 'Web Data'
 COOKIES = 'Cookies'
 SECURE_PREFERENCES = 'Secure Preferences'
 BOOKMARKS = 'Bookmarks'
+
+LOCKFILE_UNIX = 'SingletonLock'
+LOCKFILE_WIN32 = 'lockfile'

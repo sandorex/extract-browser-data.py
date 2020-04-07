@@ -14,14 +14,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+'''Windows only functions used by both Firefox and Chromium browsers'''
 
 import os
 import errno
+import re
 
+from pathlib import Path
 from typing import Union
+from .common import ProfileState
 
 
-def is_process_running(pid: Union[str, int]) -> bool:
+def _is_process_running(pid: Union[str, int]) -> bool:
    """Check whether pid exists in the current process table
 
    Warning:
@@ -57,3 +61,23 @@ def is_process_running(pid: Union[str, int]) -> bool:
       raise
    else:
       return True
+
+
+def read_profile_state_from_lockfile(path: Union[str, Path],
+                                     pid_regex: str) -> ProfileState:
+   lockfile_path = Path(path)
+
+   # if the lockfile does not exist then it's probably closed
+   if not os.path.lexists(lockfile_path):
+      return ProfileState.CLOSED
+
+   if lockfile_path.is_symlink():
+      m = re.match(pid_regex, os.readlink(lockfile_path))
+      if m is not None:
+         pid = m.group(1)
+         # if the pid read is valid then it's running
+         if pid and _is_process_running(pid):
+            return ProfileState.RUNNING
+
+   # every other case is unknown state
+   return ProfileState.UNKNOWN

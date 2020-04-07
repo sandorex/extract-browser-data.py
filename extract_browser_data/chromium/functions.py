@@ -26,10 +26,11 @@ from ..common import ProfileState, Extension, URLVisit, Bookmark, Cookie
 from .util import dt_from_webkit_epoch
 
 # import platform specific functions
+# pylint: disable=unused-import
 if util.platform() != util.Platform.WIN32:
-   from ._functions_unix import read_profile_state  # pylint: disable=unused-import
-# else:
-#    from ._functions_win32 import read_profile_state # pylint: disable=unused-import
+   from ._functions_unix import read_profile_state
+else:
+   from ._functions_win32 import read_profile_state
 
 
 def is_profile_running(path: Union[str, Path]) -> bool:

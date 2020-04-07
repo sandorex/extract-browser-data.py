@@ -22,3 +22,6 @@ PLACES = 'places.sqlite'
 COOKIES = 'cookies.sqlite'
 SIGNED_IN_USER = 'signedInUser.json'
 CONTAINERS = 'containers.json'
+
+LOCKFILE_UNIX = 'lock'
+LOCKFILE_WIN32 = 'parent.lock'

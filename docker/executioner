@@ -58,6 +58,7 @@ case "$TARGET" in
 
       # runs chromium test script
       echo ":: Executing Chromium test script '$ARG'"
+      echo "Using Chromium $CHROMIUM_VERSION"
       exec sudo -u user "$DIR"/chromium/"$ARG" "$@"
       ;;
    test|general)

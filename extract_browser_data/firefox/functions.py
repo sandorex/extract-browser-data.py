@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# pylint: disable=missing-function-docstring
 
 import json
 import datetime
@@ -28,10 +27,11 @@ from .util import dt_from_epoch, TimeUnit, open_lz4
 from ..common import ProfileState, Extension, URLVisit, Bookmark, Cookie
 
 # import platform specific functions
+# pylint: disable=unused-import
 if util.platform() != util.Platform.WIN32:
-   from ._functions_unix import read_profile_state  # pylint: disable=unused-import
-# else:
-#    from ._functions_win32 import read_profile_state # pylint: disable=unused-import
+   from ._functions_unix import read_profile_state
+else:
+   from ._functions_win32 import read_profile_state
 
 
 def is_profile_running(path: Union[str, Path]) -> bool:
