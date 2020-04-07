@@ -26,4 +26,4 @@ from .files import LOCKFILE_UNIX as LOCKFILE
 def read_profile_state(path: Union[str, Path]) -> ProfileState:
    # the link points to 'IP:+PID' for firefox
    return functions.read_profile_state_from_lockfile(
-       Path(path) / LOCKFILE, r'.*:\+([0-9]+)')
+       Path(path) / LOCKFILE, r'.*:\+([0-9]+)$')
