@@ -1,6 +1,8 @@
 name: Docker Builder
 on:
   push:
+    branches:
+      - master
     paths:
       - '.github/workflows/docker.yml'
       - 'docker/entrypoint.sh'
