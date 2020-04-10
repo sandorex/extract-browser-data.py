@@ -1,0 +1,18 @@
+*
+!.gitignore
+
+# NOTE THESE MAY NOT BE NEEDED AT ALL
+!Extensions/
+!Extension State/
+!Extension Rules/
+!Local Storage/
+!Session Storage/
+
+!Cookies
+!Current Session
+!Current Tabs
+!History
+!Login Data
+!Web Data
+!Secure Preferences
+!Preferences

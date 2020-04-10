@@ -1,0 +1,4 @@
+- read version from /usr/lib/firefox/platform.ini and compatability.ini
+  chromium has Last Version in user data dir
+
+- read sessionstore-backups/recovery.jsonlz4 or previous.jsonlz4

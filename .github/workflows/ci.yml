@@ -5,61 +5,46 @@ on:
       - master
     paths:
       - '.github/workflows/ci.yml'
-      - 'docker/**'
-      - '!docker/entrypoint.sh'
-      - '!docker/build.sh'
-      - '!docker/Dockerfile'
       - 'tests/**'
       - 'extract_browser_data/**'
       - 'docker-compose.yml'
 
 jobs:
-  # this job only caches the python virtualenv for other jobs
-  linux-venv-cache:
+  linux-browser-tests:
     runs-on: ubuntu-latest
-    name: Linux Caching
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v1
-        id: cache
-        with:
-          path: ./cache
-          key: venv-linux-${{ hashFiles('**/requirements.txt') }}
-      - name: Create the cache
-        run: sudo docker-compose run test cache
-        if: steps.cache.outputs.cache-hit != 'true'
-
-  linux-tests:
-    runs-on: ubuntu-latest
-    name: Linux ${{ matrix.browser }}-${{ matrix.test }}
-    needs: linux-venv-cache
+    name: Linux ${{ matrix.browser }} (${{ matrix.python }})
     strategy:
       fail-fast: false
       matrix:
-        test: [ 'state-detection', 'crash-detection', 'reading', 'writing', 'general' ]
         browser: [ 'firefox', 'chromium' ]
+        python: [ 'py37' ]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
-        with:
-          path: ./cache
-          key: venv-linux-${{ hashFiles('**/requirements.txt') }}
       - name: Run the test
         run: |
           sudo docker-compose pull
-          sudo docker-compose run ${{ matrix.browser }} ${{ matrix.test }}
+          sudo docker-compose run test -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
 
   linux-general-tests:
     runs-on: ubuntu-latest
-    name: Linux General Tests
-    needs: linux-venv-cache
+    name: Linux General Tests (${{ matrix.python }})
+    strategy:
+      fail-fast: false
+      matrix:
+        python: [ 'py37' ]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
-        with:
-          path: ./cache
-          key: venv-linux-${{ hashFiles('**/requirements.txt') }}
       - name: Run the test
         run: |
           sudo docker-compose pull
-          sudo docker-compose run test
+          sudo docker-compose run test -e ${{ matrix.python }} -- -m 'not browser'
+
+  formatting-tests:
+      runs-on: ubuntu-latest
+      name: Formatting Checks
+      steps:
+        - uses: actions/checkout@v2
+        - name: Run the test
+          run: |
+            sudo docker-compose pull
+            sudo docker-compose run test -e format

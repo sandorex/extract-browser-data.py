@@ -5,9 +5,7 @@ on:
       - master
     paths:
       - '.github/workflows/docker.yml'
-      - 'docker/entrypoint.sh'
-      - 'docker/build.sh'
-      - 'docker/Dockerfile'
+      - 'docker/**'
   schedule:
     # run everyday at 00:00
     - cron: '0 0 * * *'

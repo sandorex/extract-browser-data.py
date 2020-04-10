@@ -144,7 +144,9 @@ disable=print-statement,
         invalid-name,
         missing-function-docstring,
         bare-except,
-        wrong-import-position
+        wrong-import-position,
+        missing-class-docstring,
+        wrong-import-order
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
