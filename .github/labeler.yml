@@ -1,0 +1,13 @@
+tests: 'tests/**/*'
+
+CI:
+  - '.github/workflows/**/*'
+  - 'docker/**/*'
+
+firefox:
+  - 'extract_browser_data/firefox/**/*'
+  - 'tests/firefox/**/*'
+  
+chromium:
+  - 'extract_browser_data/chromium/**/*'
+  - 'tests/chromium/**/*'
