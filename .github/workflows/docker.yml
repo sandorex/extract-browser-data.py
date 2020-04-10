@@ -1,11 +1,11 @@
 name: Docker Builder
 on:
   push:
+    branches:
+      - testing-using-python
     paths:
       - '.github/workflows/docker.yml'
-      - 'docker/entrypoint.sh'
-      - 'docker/build.sh'
-      - 'docker/Dockerfile'
+      - 'docker/**'
   schedule:
     # run everyday at 00:00
     - cron: '0 0 * * *'
@@ -19,6 +19,7 @@ jobs:
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@2.14
         with:
+          tag: testing-using-docker
           name: sandorex/ebd-test-image
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}

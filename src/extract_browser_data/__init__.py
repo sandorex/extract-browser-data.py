@@ -17,8 +17,13 @@
 '''Library to extract data from browsers (only chromium and firefox based ones)
 '''
 
-VERSION = '0.1'
+__version__ = '0.1a0'
+__author__ = 'Sandorex'
+__email__ = 'rzhw3h@gmail.com'
+__url__ = 'https://github.com/sandorex/extract-browser-data.py'
+__license__ = "Apache2"
+__copyright__ = "Copyright (c) 2020 Aleksandar Radivojevic"
 
-from .profile import Profile
-from .firefox import FirefoxProfile
 from .chromium import ChromiumProfile
+from .firefox import FirefoxProfile
+from .profile import Profile

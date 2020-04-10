@@ -11,6 +11,11 @@ function common() {
                                                 python3 \
                                                 python3-pip \
                                                 python3-venv
+
+   pip3 --disable-pip-version-check --no-cache-dir install setuptools \
+                                                           wheel
+
+   pip3 --disable-pip-version-check --no-cache-dir install tox
 }
 
 # firefox only requirements

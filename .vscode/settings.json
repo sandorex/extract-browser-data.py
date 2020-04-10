@@ -1,0 +1,5 @@
+{
+   "python.pythonPath": "/bin/python3.7",
+   "restructuredtext.confPath": "${workspaceFolder}/docs/source",
+   "python.linting.mypyEnabled": true,
+}

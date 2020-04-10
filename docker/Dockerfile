@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 COPY build.sh /
 RUN chmod +x /build.sh \
    && bash /build.sh $build \
-   && rm -rf /build.sh
+   && rm -f /build.sh
 
 RUN useradd user --shell /bin/bash --create-home \
    && usermod -a -G sudo user \
@@ -17,12 +17,13 @@ RUN useradd user --shell /bin/bash --create-home \
 
 ENV HOME=/home/user
 
-VOLUME [ "/profile" ]
-RUN mkdir -p /profile /project /env \
-   && chown -R user:user /project /profile /env
+RUN mkdir -p /project \
+   && chown -R user:user /project
 
 COPY --chown=user:user entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
 
 WORKDIR "/project"
+
+USER user
