@@ -16,9 +16,9 @@
 # limitations under the License.
 
 import configparser
-import os
 from os.path import isfile as file_exists
-from typing import Dict, List
+from pathlib import Path
+from typing import ClassVar, Dict, List, Type
 
 from ..firefox import FirefoxProfile
 from ..profile import Profile
@@ -28,7 +28,7 @@ from .browser import Browser
 
 class FirefoxBrowser(Browser):
    '''Browser class for Firefox-based browsers'''
-   PROFILE_TYPE = FirefoxProfile
+   PROFILE_TYPE: ClassVar[Type[Profile]] = FirefoxProfile
 
    @classmethod
    def get_default_user_path(cls) -> Dict[Platform, str]:
@@ -68,17 +68,17 @@ class FirefoxBrowser(Browser):
             continue
 
          name = parser.get(k, 'Name')
-         path = parser.get(k, 'Path')
+         path = Path(parser.get(k, 'Path'))
          default = parser.getboolean(k, 'Default', fallback=False)
 
          # create an absolute path if it's relative
          if parser.getboolean(k, 'IsRelative', fallback=False):
-            path = self.data_path.joinpath(path)
+            path = self.data_path / path
 
          # normalize it just in case
-         path = os.path.normpath(path)
+         # path = os.path.normpath(path)
 
          # pylint: disable=not-callable
-         profiles.append(self.PROFILE_TYPE(name, path, default))
+         profiles.append(self.PROFILE_TYPE(name, path, default=default))
 
       return profiles

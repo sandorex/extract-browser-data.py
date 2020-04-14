@@ -15,16 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import datetime
+import json
 import re
-
-from pathlib import Path
-from typing import Dict, Iterator, Any, List, Optional, Union
 from os.path import isfile as file_exists
+from pathlib import Path
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Union
+
 from .. import util
-from .util import dt_from_epoch, TimeUnit, open_lz4
-from ..common import ProfileState, Extension, URLVisit, Bookmark, Cookie
+from ..common import Bookmark, Cookie, Extension, ProfileState, URLVisit
+from .util import TimeUnit, dt_from_epoch, open_lz4
 
 # import platform specific functions
 # pylint: disable=unused-import
@@ -41,9 +41,17 @@ def is_profile_running(path: Union[str, Path]) -> bool:
 
 
 # FIREFOX #
+def find_container(containers: Iterable[Dict[str, Any]],
+                   context_id: str) -> Optional[Dict[str, Any]]:
+   for container in containers:
+      if container.get('id') == context_id:
+         return container
+
+   return None
+
+
 def read_containers(file: Union[str, Path]) -> Iterator[Dict[str, Any]]:
    if not file_exists(file):
-      yield
       return
 
    with open(file) as fd:

@@ -16,13 +16,14 @@
 # limitations under the License.
 
 from abc import abstractmethod
+
 from ..profile import Writer
 
 
 class FirefoxWriter(Writer):
    """Profile writer for Firefox-based browsers"""
    @abstractmethod
-   def _open(self):
+   def open(self) -> 'FirefoxWriter':
       raise NotImplementedError()
 
    @abstractmethod

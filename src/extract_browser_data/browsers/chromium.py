@@ -17,7 +17,7 @@
 
 import json
 import os
-from typing import Dict, List
+from typing import ClassVar, Dict, List, Type
 
 from ..chromium import ChromiumProfile
 from ..profile import Profile
@@ -27,7 +27,7 @@ from .browser import Browser
 
 class ChromiumBrowser(Browser):
    '''Browser class for Chromium-based browsers'''
-   PROFILE_TYPE = ChromiumProfile
+   PROFILE_TYPE: ClassVar[Type[Profile]] = ChromiumProfile
 
    @classmethod
    def get_default_user_path(cls) -> Dict[Platform, str]:

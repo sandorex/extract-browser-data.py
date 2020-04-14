@@ -20,7 +20,8 @@ from . import util
 
 # import platform specific functions
 # pylint: disable=unused-import
+
 if util.platform() != util.Platform.WIN32:
    from ._functions_unix import read_profile_state_from_lockfile
 else:
-   from ._functions_win32 import read_profile_state_from_lockfile
+   from ._functions_win32 import read_profile_state_from_lockfile  # type: ignore

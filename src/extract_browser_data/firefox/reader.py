@@ -15,12 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, Iterator, Any, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
+
+from ..common import Bookmark, Cookie, Extension, URLVisit
 from ..profile import Reader
-from ..common import Extension, URLVisit, Bookmark, Cookie
-from .files import (SESSIONSTORE, EXTENSIONS, PLACES, COOKIES, SIGNED_IN_USER,
-                    CONTAINERS)
 from . import functions as func
+from .files import (CONTAINERS, COOKIES, EXTENSIONS, PLACES, SESSIONSTORE,
+                    SIGNED_IN_USER)
 
 
 class FirefoxReader(Reader):

@@ -16,12 +16,12 @@
 # limitations under the License.
 '''Windows only functions used by both Firefox and Chromium browsers'''
 
-import os
 import errno
+import os
 import re
-
 from pathlib import Path
 from typing import Union
+
 from .common import ProfileState
 
 

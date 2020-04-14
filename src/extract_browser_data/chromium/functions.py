@@ -15,14 +15,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import datetime
-
+import json
 from os.path import isfile as file_exists
 from pathlib import Path
-from typing import List, Iterator, Optional, Union
+from typing import Iterator, List, Optional, Union
+
 from .. import util
-from ..common import ProfileState, Extension, URLVisit, Bookmark, Cookie
+from ..common import Bookmark, Cookie, Extension, ProfileState, URLVisit
 from .util import dt_from_webkit_epoch
 
 # import platform specific functions

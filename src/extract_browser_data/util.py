@@ -16,15 +16,14 @@
 # limitations under the License.
 
 import os
-import sys
-import sqlite3
-import tempfile
 import shutil
-
+import sqlite3
+import sys
+import tempfile
 from enum import Enum
-from sqlite3 import Connection
 from pathlib import Path
-from typing import Optional, Tuple, Union, Any
+from sqlite3 import Connection
+from typing import Any, Optional, Tuple, Union
 
 
 class Platform(Enum):
@@ -35,7 +34,7 @@ class Platform(Enum):
    MACOS = 'darwin'
 
    @classmethod
-   def _missing_(cls, _value):
+   def _missing_(cls, _value: Any) -> 'Platform':
       return cls.UNKNOWN
 
 

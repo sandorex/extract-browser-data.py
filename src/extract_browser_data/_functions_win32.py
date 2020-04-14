@@ -17,9 +17,9 @@
 '''Windows only functions used by both Firefox and Chromium browsers'''
 
 import os
-
 from pathlib import Path
 from typing import Union
+
 from .common import ProfileState
 
 
@@ -42,6 +42,7 @@ def _is_lockfile_open(filepath: Union[str, Path]) -> bool:
       os.rename(filepath, filepath)
    except:
       return True
+   return False
 
 
 def read_profile_state_from_lockfile(path: Union[str, Path]) -> ProfileState:

@@ -39,7 +39,7 @@ jobs:
           sudo docker-compose pull
           sudo docker-compose run test -e ${{ matrix.python }} -- -m 'not browser'
 
-  formatting-tests:
+  formatting:
       runs-on: ubuntu-latest
       name: Formatting Checks
       steps:
@@ -48,3 +48,13 @@ jobs:
           run: |
             sudo docker-compose pull
             sudo docker-compose run test -e format
+
+  mypy:
+      runs-on: ubuntu-latest
+      name: Type Checks
+      steps:
+        - uses: actions/checkout@v2
+        - name: Run the test
+          run: |
+            sudo docker-compose pull
+            sudo docker-compose run test -e mypy

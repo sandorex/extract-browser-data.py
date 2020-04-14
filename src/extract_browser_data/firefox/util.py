@@ -17,9 +17,10 @@
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Union, BinaryIO
-from pathlib import Path
 from io import BytesIO
+from pathlib import Path
+from typing import BinaryIO, Union
+
 from lz4.block import decompress
 
 

@@ -15,11 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Iterator, Optional
+from typing import Iterator, List, Optional
+
+from ..common import Bookmark, Cookie, Extension, URLVisit
 from ..profile import Reader
-from ..common import Extension, URLVisit, Bookmark, Cookie
-from .files import (HISTORY, SECURE_PREFERENCES, BOOKMARKS, COOKIES)
 from . import functions as func
+from .files import BOOKMARKS, COOKIES, HISTORY, SECURE_PREFERENCES
 
 
 class ChromiumReader(Reader):

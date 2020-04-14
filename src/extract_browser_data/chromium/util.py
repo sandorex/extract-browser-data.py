@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Union
 from datetime import datetime, timedelta
+from typing import Union
 
 
 def dt_from_webkit_epoch(epoch: Union[str, int]) -> datetime:

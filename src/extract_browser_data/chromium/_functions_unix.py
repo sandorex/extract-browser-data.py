@@ -18,6 +18,7 @@
 
 from pathlib import Path
 from typing import Union
+
 from .. import functions
 from ..common import ProfileState
 from .files import LOCKFILE_UNIX as LOCKFILE

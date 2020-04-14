@@ -16,8 +16,9 @@
 # limitations under the License.
 
 from typing import Dict
-from ..chromium import ChromiumBrowser
+
 from ...util import Platform
+from ..chromium import ChromiumBrowser
 
 
 class BraveBrowser(ChromiumBrowser):

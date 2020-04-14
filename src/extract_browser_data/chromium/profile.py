@@ -18,9 +18,9 @@
 from os.path import isfile as file_exists
 from os.path import join as join_path
 from pathlib import Path
-from typing import Optional, Union
+from typing import ClassVar, Type, Union
 
-from ..profile import Profile
+from ..profile import Profile, Reader, Writer
 from . import functions as func
 from .files import (BOOKMARKS, COOKIES, HISTORY, LOGIN_DATA, PREFERENCES,
                     SECURE_PREFERENCES, WEB_DATA)
@@ -30,8 +30,8 @@ from .writer import ChromiumWriter
 
 class ChromiumProfile(Profile):
    """Profile for Chromium-based browsers"""
-   def __init__(self, name: Optional[str], path: Union[str, Path]):
-      super().__init__(name, path, ChromiumReader, ChromiumWriter)
+   READER_TYPE: ClassVar[Type[Reader]] = ChromiumReader
+   WRITER_TYPE: ClassVar[Type[Writer]] = ChromiumWriter
 
    @classmethod
    def is_valid_profile(cls, path: Union[str, Path]) -> bool:

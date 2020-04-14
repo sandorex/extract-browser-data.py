@@ -18,9 +18,9 @@
 from os.path import isfile as file_exists
 from os.path import join as join_path
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, ClassVar, Optional, Type, Union
 
-from ..profile import Profile
+from ..profile import Profile, Reader, Writer
 from . import functions as func
 from .files import COOKIES, EXTENSIONS, PLACES
 from .reader import FirefoxReader
@@ -29,13 +29,15 @@ from .writer import FirefoxWriter
 
 class FirefoxProfile(Profile):
    """Profile for Firefox-based browsers"""
+   READER_TYPE: ClassVar[Type[Reader]] = FirefoxReader
+   WRITER_TYPE: ClassVar[Type[Writer]] = FirefoxWriter
+
    def __init__(self,
                 name: Optional[str],
                 path: Union[str, Path],
-                default: bool = False):
-      super().__init__(name, path, FirefoxReader, FirefoxWriter)
-
-      self.default = default
+                default: bool = False,
+                **extras: Any):
+      super().__init__(name, path, default=default, **extras)
 
    @staticmethod
    def is_valid_profile(path: Union[str, Path]) -> bool:

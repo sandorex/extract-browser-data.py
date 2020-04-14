@@ -16,9 +16,9 @@
 # limitations under the License.
 # pylint: disable=too-many-instance-attributes,too-many-arguments,too-few-public-methods
 
-from enum import Enum
 from datetime import datetime
-from typing import Dict, Any, Optional, List
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class ProfileState(Enum):

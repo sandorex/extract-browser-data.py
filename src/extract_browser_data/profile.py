@@ -16,13 +16,13 @@
 # limitations under the License.
 
 import os
-
-from sqlite3 import Connection
-from typing import Type, Union, Optional, List, Iterator, Any
 from abc import ABC, abstractmethod
 from pathlib import Path
-from .common import Extension, Bookmark, URLVisit, Cookie
+from sqlite3 import Connection
+from typing import Any, ClassVar, Dict, Iterator, List, Optional, Type, Union
+
 from . import util
+from .common import Bookmark, Cookie, Extension, URLVisit
 
 
 class Profile(ABC):
@@ -44,20 +44,28 @@ class Profile(ABC):
       writer_type: Type that will be used as the writer, must be
          subclass of :class:`.writer.Writer`
    """
+   READER_TYPE: ClassVar[Type['Reader']]
+   WRITER_TYPE: ClassVar[Type['Writer']]
+
    def __init__(self, name: Optional[str], path: Union[str, Path],
-                reader_type: Type['Reader'], writer_type: Type['Writer']):
+                **extras: Any):
       self.name = name
       self.path = Path(path)
-      self.reader_type = reader_type
-      self.writer_type = writer_type
+      self.extras: Dict[str, Any] = extras
+
+   def __getattribute__(self, name: str) -> Any:
+      if name in self.__dict__:
+         return getattr(self, name, None)
+
+      return self.extras.get(name)
 
    def reader(self) -> 'Reader':
       '''Tries to create a reader for the profile'''
-      return self.reader_type(self)
+      return self.READER_TYPE(self)
 
    def writer(self) -> 'Writer':
       '''Tries to create a writer for the profile'''
-      return self.writer_type(self)
+      return self.WRITER_TYPE(self)
 
    @staticmethod
    def find_compatible_profile(
@@ -71,7 +79,7 @@ class Profile(ABC):
       if not os.path.isdir(path):
          raise NotADirectoryError()
 
-      c: 'Profile'
+      c: Any
       for c in Profile.__subclasses__():
          if c.is_valid_profile(path):
             return c
@@ -176,8 +184,7 @@ class Writer(ABC):
       self.profile = profile
 
    def __enter__(self) -> 'Writer':
-      self._open()
-      return self
+      return self.open()
 
    def __exit__(self, *args: Any) -> None:
       self.close()
@@ -189,7 +196,7 @@ class Writer(ABC):
 
    # ABSTRACT #
    @abstractmethod
-   def _open(self) -> None:
+   def open(self) -> 'Writer':
       '''Gets locks on required databases so it can write without
       interruptions'''
       raise NotImplementedError()

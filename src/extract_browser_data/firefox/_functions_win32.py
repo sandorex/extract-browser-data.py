@@ -18,10 +18,12 @@
 
 from pathlib import Path
 from typing import Union
+
 from .. import functions
 from ..common import ProfileState
 from .files import LOCKFILE_WIN32 as LOCKFILE
 
 
 def read_profile_state(path: Union[str, Path]) -> ProfileState:
-   return functions.read_profile_state_from_lockfile(Path(path) / LOCKFILE)
+   return functions.read_profile_state_from_lockfile(  # type: ignore
+       Path(path) / LOCKFILE)
