@@ -10,6 +10,36 @@ on:
       - 'docker-compose.yml'
 
 jobs:
+  firefox-schema-tests:
+    runs-on: ubuntu-latest
+    name: Firefox Schema Tests
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run the test
+        run: |
+          sudo docker-compose pull
+          sudo docker-compose run test --skip-missing-interpreters=false -e py37 -- tests/firefox/test_ff_schema.py
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: tox-cache
+          path: ./.tox
+
+  chromium-schema-tests:
+    runs-on: ubuntu-latest
+    name: Chromium Schema Tests
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run the test
+        run: |
+          sudo docker-compose pull
+          sudo docker-compose run test --skip-missing-interpreters=false -e py37 -- tests/chromium/test_ch_schema.py
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: tox-cache
+          path: ./.tox
+
   linux-browser-tests:
     runs-on: ubuntu-latest
     name: Linux ${{ matrix.browser }} (${{ matrix.python }})
@@ -17,13 +47,13 @@ jobs:
       fail-fast: false
       matrix:
         browser: [ 'firefox', 'chromium' ]
-        python: [ 'py37' ]
+        python: [ 'py36' ]
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
         run: |
           sudo docker-compose pull
-          sudo docker-compose run test -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
+          sudo docker-compose run test --skip-missing-interpreters=false -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
 
   linux-general-tests:
     runs-on: ubuntu-latest
@@ -31,13 +61,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [ 'py37' ]
+        python: [ 'py36' ]
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
         run: |
           sudo docker-compose pull
-          sudo docker-compose run test -e ${{ matrix.python }} -- -m 'not browser'
+          sudo docker-compose run test --skip-missing-interpreters=false -e ${{ matrix.python }} -- -m 'not browser'
 
   formatting:
       runs-on: ubuntu-latest
@@ -47,7 +77,7 @@ jobs:
         - name: Run the test
           run: |
             sudo docker-compose pull
-            sudo docker-compose run test -e format
+            sudo docker-compose run test --skip-missing-interpreters=false -e format
 
   mypy:
       runs-on: ubuntu-latest
@@ -57,4 +87,4 @@ jobs:
         - name: Run the test
           run: |
             sudo docker-compose pull
-            sudo docker-compose run test -e mypy
+            sudo docker-compose run test --skip-missing-interpreters=false -e mypy

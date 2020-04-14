@@ -53,11 +53,11 @@ class Profile(ABC):
       self.path = Path(path)
       self.extras: Dict[str, Any] = extras
 
-   def __getattribute__(self, name: str) -> Any:
-      if name in self.__dict__:
-         return getattr(self, name, None)
+   def get(self, name: str) -> Any:
+      value = getattr(self, name, None)
 
-      return self.extras.get(name)
+      if value is None:
+         return self.extras.get(name)
 
    def reader(self) -> 'Reader':
       '''Tries to create a reader for the profile'''
@@ -112,6 +112,7 @@ class Profile(ABC):
       raise NotImplementedError()
 
 
+# TODO rework reader to cache all the databases if not 'realtime'
 class Reader(ABC):
    """Base class for browser profile reader
 

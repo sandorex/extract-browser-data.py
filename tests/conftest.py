@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument,redefined-outer-name
+
 import os
 import signal
 import subprocess
@@ -7,6 +9,8 @@ from distutils import dir_util
 from pathlib import Path
 
 import pytest
+
+from .wrapper import ChromiumWrapper, FirefoxWrapper
 
 DIR = Path(__file__).parent
 
@@ -39,6 +43,11 @@ def pytest_addoption(parser):
                     type=str,
                     help="chromium executable (default 'chromium-browser')")
 
+   parser.addoption("--docker",
+                    action="store_true",
+                    default=False,
+                    help="run docker only tests")
+
    if LINUX:
       parser.addoption("--no-xvfb",
                        action="store_false",
@@ -46,7 +55,7 @@ def pytest_addoption(parser):
                        help="do not use xvfb for gui tests (linux only)")
 
 
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(items, config):
    for item in items:
       if item.name.startswith('test_ff_'):
          item.add_marker(pytest.mark.firefox)
@@ -72,29 +81,16 @@ def pytest_collection_modifyitems(items):
          item.add_marker(pytest.mark.unix)
 
       if WIN32 and not check_marker(item, 'win32'):
-         item.add_marker(
-             pytest.mark.skip(reason="test can only run on windows"))
+         item.add_marker(pytest.mark.skip())
       elif LINUX and not (check_marker(item, 'linux')
                           or check_marker(item, 'unix')):
-         item.add_marker(pytest.mark.skip(reason="test can only run on linux"))
+         item.add_marker(pytest.mark.skip())
       elif MACOS and not (check_marker(item, 'macos')
                           or check_marker(item, 'unix')):
-         item.add_marker(pytest.mark.skip(reason="test can only run on macos"))
+         item.add_marker(pytest.mark.skip())
 
-
-@pytest.fixture
-def chromium_profile(tmpdir):
-   dir_util.copy_tree(os.path.join(DIR, 'chromium', 'user_data_dir'),
-                      str(tmpdir))
-
-   return tmpdir / 'Default', tmpdir
-
-
-@pytest.fixture
-def firefox_profile(tmpdir):
-   dir_util.copy_tree(os.path.join(DIR, 'firefox', 'profile'), str(tmpdir))
-
-   return tmpdir
+      if check_marker(item, 'docker') and not config.getoption("--docker"):
+         item.add_marker(pytest.mark.skip())
 
 
 @pytest.fixture(scope='session')
@@ -163,15 +159,43 @@ def xvfb(request):
 
 
 @pytest.fixture
+def firefox_profile(tmpdir):
+   dir_util.copy_tree(os.path.join(DIR, 'firefox', 'profile'), str(tmpdir))
+
+   return tmpdir
+
+
+@pytest.fixture
+def chromium_profile(tmpdir):
+   dir_util.copy_tree(os.path.join(DIR, 'chromium', 'user_data_dir'),
+                      str(tmpdir))
+
+   return tmpdir / 'Default', tmpdir
+
+
+@pytest.fixture
+def new_firefox_profile(tmpdir, xvfb):
+   FirefoxWrapper(tmpdir).start().stop()
+
+   return tmpdir
+
+
+@pytest.fixture
+def new_chromium_profile(tmpdir, xvfb):
+   ChromiumWrapper(tmpdir).start().stop()
+
+   return tmpdir / 'Default', tmpdir
+
+
+@pytest.fixture
 def datadir(tmpdir, request):
-   '''
-   Fixture responsible for searching a folder with the same name of test
+   '''Fixture responsible for searching a folder with the same name of test
    module and, if available, moving all contents to a temporary directory so
    tests can use them freely.
    '''
    # https://stackoverflow.com/a/29631801/6251201
    filename = request.module.__file__
-   test_dir = os.path.splitext(filename)
+   test_dir, _ = os.path.splitext(filename)
 
    if os.path.isdir(test_dir):
       dir_util.copy_tree(test_dir, str(tmpdir))
