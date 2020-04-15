@@ -7,3 +7,7 @@ services:
     build:
       context: ./docker
     entrypoint: [ "/entrypoint.sh" ]
+    environment:
+      # these are required cause chromium crashes in docker because of namespace
+      # issues
+      - CHROMIUM_ARGS=--no-sandbox --disable-gpu

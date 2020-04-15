@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -87,7 +88,13 @@ class FirefoxWrapper(Wrapper):
    def __init__(self, profile, executable=None):
       self.profile_path = Path(profile).resolve().absolute()
 
-      super().__init__('firefox', executable, ['-profile', self.profile_path])
+      args = ['-profile', self.profile_path]
+
+      firefox_args = os.environ.get('FIREFOX_ARGS')
+      if firefox_args:
+         args += firefox_args.split(' ')
+
+      super().__init__('firefox', executable, args)
 
    def _stop(self):
       subprocess.check_call(['xdotool', 'windowactivate', '--sync', self.wid])
@@ -95,6 +102,9 @@ class FirefoxWrapper(Wrapper):
       subprocess.check_call(['wmctrl', '-ic', self.wid])
       time.sleep(0.5)
       subprocess.check_call(['xdotool', 'key', 'Return'])
+
+
+# TODO pass which keystore to use as an enum
 
 
 class ChromiumWrapper(Wrapper):
@@ -113,6 +123,10 @@ class ChromiumWrapper(Wrapper):
 
       if additional_args is not None:
          args += additional_args
+
+      chromium_args = os.environ.get('CHROMIUM_ARGS')
+      if chromium_args:
+         args += chromium_args.split(' ')
 
       super().__init__('chromium-browser', executable, args)
 

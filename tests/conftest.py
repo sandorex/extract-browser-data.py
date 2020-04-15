@@ -38,6 +38,7 @@ def pytest_addoption(parser):
                     default='firefox',
                     type=str,
                     help="firefox executable (default 'firefox')")
+
    parser.addoption("--chromium",
                     default='chromium-browser',
                     type=str,
@@ -100,6 +101,7 @@ def xvfb(request):
    This fixture does nothing on platforms other than linux, to disable on linux
    use --no-xvfb flag
    """
+   # skip running xvfb but still run the test
    if not LINUX or not request.config.getoption("--no-xvfb"):
       yield
       return
@@ -107,53 +109,62 @@ def xvfb(request):
    DISPLAY = ':99'
 
    if os.path.exists('/tmp/.X11-unix/X' + DISPLAY[1:]):
-      raise Exception(f'x server is already running at display {DISPLAY}')
+      pytest.fail(f'x server is already running at display {DISPLAY}')
 
    xvfb_process = subprocess.Popen(
        ['Xvfb', DISPLAY, '-screen', '0', '1280x1024x24'])
 
    if xvfb_process.poll():
-      raise Exception('xvfb has quit unexpectedly')
+      pytest.fail('xvfb has quit unexpectedly')
 
    # set the environment variable
    os.environ['DISPLAY'] = DISPLAY
 
+   print('starting xvfb')
+
    # wait for xvfb
    counter = 0
-   while not subprocess.call(
-       ['xdpyinfo'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
+   while subprocess.call(
+       ['xdpyinfo'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
       time.sleep(1)
       counter += 1
 
       if counter > 20:
          xvfb_process.send_signal(signal.SIGQUIT)
-         raise Exception('timeout for xvfb has been exceeded, aborting..')
+         xvfb_process.wait(10)
+         pytest.fail('timeout for xvfb has been exceeded, aborting..')
 
-   fluxbox_process = subprocess.Popen(['fluxbox'],
-                                      stdout=subprocess.DEVNULL,
-                                      stderr=subprocess.DEVNULL)
+   wm_process = subprocess.Popen(['fluxbox'],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
 
-   if fluxbox_process.poll():
-      raise Exception('fluxbox has quit unexpectedly')
+   if wm_process.poll():
+      pytest.fail('the window manager has quit unexpectedly')
 
-   # wait for fluxbox
+   print('starting the window manager')
+
+   # wait for the wm
    counter = 0
-   while not subprocess.call(
-       ['wmctrl', '-m'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
+   while subprocess.call(['wmctrl', '-m'],
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL) != 0:
       time.sleep(1)
       counter += 1
 
       if counter > 20:
-         fluxbox_process.send_signal(signal.SIGQUIT)
-         raise Exception('timeout for fluxbox has been exceeded, aborting..')
+         wm_process.send_signal(signal.SIGQUIT)
+         wm_process.wait(10)
+         pytest.fail('timeout for window manager has been exceeded, aborting..')
 
    # run tests
    yield
 
    # tell them to terminate
-   fluxbox_process.send_signal(signal.SIGQUIT)
-   fluxbox_process.wait()
+   print('quitting fluxbox')
+   wm_process.send_signal(signal.SIGQUIT)
+   wm_process.wait()
 
+   print('quitting xvfb')
    xvfb_process.send_signal(signal.SIGQUIT)
    xvfb_process.wait()
 
