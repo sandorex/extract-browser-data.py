@@ -18,11 +18,11 @@ jobs:
       - name: Run the test
         run: |
           sudo docker-compose pull
-          sudo docker-compose run test --skip-missing-interpreters=false -e py37 -- tests/firefox/test_ff_schema.py
+          sudo docker-compose run test --skip-missing-interpreters=false -e py36 -- tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
-          name: tox-cache
+          name: firefox-schema-cache-${{ GITHUB_RUN_NUMBER }}
           path: ./.tox
 
   chromium-schema-tests:
@@ -33,11 +33,11 @@ jobs:
       - name: Run the test
         run: |
           sudo docker-compose pull
-          sudo docker-compose run test --skip-missing-interpreters=false -e py37 -- tests/chromium/test_ch_schema.py
+          sudo docker-compose run test --skip-missing-interpreters=false -e py36 -- tests/chromium/test_ch_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
-          name: tox-cache
+          name: chromium-schema-cache-${{ GITHUB_RUN_NUMBER }}
           path: ./.tox
 
   linux-browser-tests:
