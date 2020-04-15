@@ -3,7 +3,7 @@ services:
   test:
     volumes:
       - .:/project
-    image: quay.io/sandorex/ebd-test-image
+    image: docker.pkg.github.com/sandorex/extract-browser-data.py/test-image
     build:
       context: ./docker
     entrypoint: [ "/entrypoint.sh" ]

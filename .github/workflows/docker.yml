@@ -19,6 +19,7 @@ jobs:
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@2.14
         with:
+          tag: latest
           name: ${{ github.repository }}/test-image
           username: sandorex
           password: ${{ secrets.GITHUB_TOKEN }}
