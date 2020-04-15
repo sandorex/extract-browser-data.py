@@ -4,7 +4,7 @@ import pytest
 
 import extract_browser_data as ebd
 
-pytestmark = pytest.mark.docker
+pytestmark = [pytest.mark.explicitly_run, pytest.mark.gui]
 
 
 def test_ff_schema_containers(new_firefox_profile):

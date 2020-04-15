@@ -44,11 +44,6 @@ def pytest_addoption(parser):
                     type=str,
                     help="chromium executable (default 'chromium-browser')")
 
-   parser.addoption("--docker",
-                    action="store_true",
-                    default=False,
-                    help="run docker only tests")
-
    if LINUX:
       parser.addoption("--no-xvfb",
                        action="store_false",
@@ -90,8 +85,14 @@ def pytest_collection_modifyitems(items, config):
                           or check_marker(item, 'unix')):
          item.add_marker(pytest.mark.skip())
 
-      if check_marker(item, 'docker') and not config.getoption("--docker"):
-         item.add_marker(pytest.mark.skip())
+      # TODO allow per module/class marking
+      # tests that can run only explicitly
+      if check_marker(item, 'explicitly_run'):
+         for arg in config.args:
+            if arg == item.nodeid:
+               break
+         else:
+            item.add_marker(pytest.mark.skip())
 
 
 @pytest.fixture(scope='session')
