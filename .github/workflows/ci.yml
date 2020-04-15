@@ -27,19 +27,6 @@ jobs:
         with:
           name: firefox-schema-cache
           path: ./.tox
-      - run: |
-          cat << EOF > /tmp/issue.md
-          It seems that Firefox schema has changed
-          The run can be found [here](https://github.com/${{ github.repository }}/runs/${{ github.run_id }})
-          EOF
-        if: failure()
-      - name: Create Issue From File
-        uses: peter-evans/create-issue-from-file@v2
-        if: failure()
-        with:
-          title: Firefox schema has changed
-          content-filepath: /tmp/issue.md
-          labels: firefox
 
   chromium-schema-tests:
     runs-on: ubuntu-latest
@@ -55,19 +42,6 @@ jobs:
         with:
           name: chromium-schema-cache
           path: ./.tox
-      - run: |
-          cat << EOF > /tmp/issue.md
-          It seems that Chromium schema has changed
-          The run can be found [here](https://github.com/${{ github.repository }}/runs/${{ github.run_id }})
-          EOF
-        if: failure()
-      - name: Create Issue From File
-        uses: peter-evans/create-issue-from-file@v2
-        if: failure()
-        with:
-          title: Chromium schema has changed
-          content-filepath: /tmp/issue.md
-          labels: chromium
 
   linux-browser-tests:
     runs-on: ubuntu-latest
