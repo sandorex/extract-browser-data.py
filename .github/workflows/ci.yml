@@ -8,6 +8,9 @@ on:
       - 'tests/**'
       - 'extract_browser_data/**'
       - 'docker-compose.yml'
+  schedule:
+    # every day at 01:00
+    - cron: '0 1 * * *'
 
 jobs:
   firefox-schema-tests:
@@ -22,7 +25,7 @@ jobs:
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
-          name: firefox-schema-cache-${{ GITHUB_RUN_NUMBER }}
+          name: firefox-schema-cache
           path: ./.tox
 
   chromium-schema-tests:
@@ -37,7 +40,7 @@ jobs:
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
-          name: chromium-schema-cache-${{ GITHUB_RUN_NUMBER }}
+          name: chromium-schema-cache
           path: ./.tox
 
   linux-browser-tests:
