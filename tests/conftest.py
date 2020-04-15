@@ -85,11 +85,11 @@ def pytest_collection_modifyitems(items, config):
                           or check_marker(item, 'unix')):
          item.add_marker(pytest.mark.skip())
 
-      # TODO allow per module/class marking
       # tests that can run only explicitly
-      if check_marker(item, 'explicitly_run'):
+      if check_marker(item,
+                      'explicitly_run') and not check_marker(item, 'skip'):
          for arg in config.args:
-            if arg == item.nodeid:
+            if item.nodeid.startswith(arg):
                break
          else:
             item.add_marker(pytest.mark.skip())
