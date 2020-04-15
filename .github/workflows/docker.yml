@@ -2,7 +2,7 @@ name: Docker Builder
 on:
   push:
     branches:
-      - master
+      - ci-testing
     paths:
       - '.github/workflows/docker.yml'
       - 'docker/**'
@@ -19,9 +19,8 @@ jobs:
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@2.14
         with:
-          name: sandorex/ebd-test-image
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_PASSWORD }}
-          registry: quay.io
+          name: ${{ github.repository }}/test-image
+          username: sandorex
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
           workdir: ./docker
-          cache: ${{ github.event_name != 'schedule' }}

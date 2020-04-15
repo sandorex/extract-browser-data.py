@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - ci-testing
     paths:
       - '.github/workflows/ci.yml'
       - 'tests/**'
@@ -28,7 +28,7 @@ jobs:
           name: firefox-schema-cache
           path: ./.tox
       - run: |
-          cat << EOF > ./issue.md
+          cat << EOF > /tmp/issue.md
           It seems that Firefox schema has changed
           The run can be found [here](https://github.com/${{ github.repository }}/runs/${{ github.run_id }})
           EOF
@@ -38,7 +38,7 @@ jobs:
         if: failure()
         with:
           title: Firefox schema has changed
-          content-filepath: ./issue.md
+          content-filepath: /tmp/issue.md
           labels: firefox
 
   chromium-schema-tests:
@@ -56,7 +56,7 @@ jobs:
           name: chromium-schema-cache
           path: ./.tox
       - run: |
-          cat << EOF > ./issue.md
+          cat << EOF > /tmp/issue.md
           It seems that Chromium schema has changed
           The run can be found [here](https://github.com/${{ github.repository }}/runs/${{ github.run_id }})
           EOF
@@ -66,7 +66,7 @@ jobs:
         if: failure()
         with:
           title: Chromium schema has changed
-          content-filepath: ./issue.md
+          content-filepath: /tmp/issue.md
           labels: chromium
 
   linux-browser-tests:
