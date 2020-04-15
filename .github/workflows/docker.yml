@@ -24,4 +24,3 @@ jobs:
           password: ${{ secrets.QUAY_PASSWORD }}
           registry: quay.io
           workdir: ./docker
-          cache: ${{ github.event_name != 'schedule' }}
