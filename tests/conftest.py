@@ -29,36 +29,66 @@ elif sys.platform == 'darwin':
    UNIX = True
 
 
-def check_marker(item, marker):
-   return next(item.iter_markers(name=marker), None) is not None
+def has_markers(item, *markers):
+   return all(
+       next(item.iter_markers(name=marker), None) is not None
+       for marker in markers)
 
 
 def pytest_addoption(parser):
-   parser.addoption("--firefox",
-                    default='firefox',
-                    type=str,
-                    help="firefox executable (default 'firefox')")
-
-   parser.addoption("--chromium",
+   parser.addoption('--chromium',
                     default='chromium-browser',
                     type=str,
                     help="chromium executable (default 'chromium-browser')")
 
+   parser.addoption('--firefox',
+                    default='firefox',
+                    type=str,
+                    help="firefox executable (default 'firefox')")
+
    if LINUX:
-      parser.addoption("--no-xvfb",
-                       action="store_false",
+      parser.addoption('--no-xvfb',
+                       action='store_false',
                        default=True,
-                       help="do not use xvfb for gui tests (linux only)")
+                       help='do not use xvfb for gui tests (linux only)')
+
+
+def pytest_configure(config):
+   pytest.FIREFOX_VERSION = FirefoxWrapper.read_version(
+       config.getoption('--firefox'))
+   pytest.CHROMIUM_VERSION = ChromiumWrapper.read_version(
+       config.getoption('--chromium'))
+
+
+def pytest_sessionstart(session):
+   if pytest.FIREFOX_VERSION is not None:
+      print(f'Found Firefox version {pytest.FIREFOX_VERSION[0]}')
+   else:
+      print('Firefox not found')
+
+   if pytest.CHROMIUM_VERSION is not None:
+      print(f'Found Chromium version {pytest.CHROMIUM_VERSION[0]}')
+   else:
+      print('Chromium not found')
 
 
 def pytest_collection_modifyitems(items, config):
    for item in items:
-      if item.name.startswith('test_ff_'):
-         item.add_marker(pytest.mark.firefox)
-         item.add_marker(pytest.mark.browser)
-      elif item.name.startswith('test_ch_'):
+      if item.name.startswith('test_ch_'):
          item.add_marker(pytest.mark.chromium)
          item.add_marker(pytest.mark.browser)
+      elif item.name.startswith('test_ff_'):
+         item.add_marker(pytest.mark.firefox)
+         item.add_marker(pytest.mark.browser)
+
+      if has_markers(item, 'gui'):
+         if has_markers(item, 'firefox') and pytest.FIREFOX_VERSION is None:
+            item.add_marker(
+                pytest.mark.skip(reason='the test requires Firefox executable'))
+         elif has_markers(item, 'chromium') and pytest.CHROMIUM_VERSION is None:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason='the test requires Chromium executable'))
 
       if item.name.endswith('_win32'):
          item.add_marker(pytest.mark.win32)
@@ -76,23 +106,27 @@ def pytest_collection_modifyitems(items, config):
          item.add_marker(pytest.mark.macos)
          item.add_marker(pytest.mark.unix)
 
-      if WIN32 and not check_marker(item, 'win32'):
-         item.add_marker(pytest.mark.skip())
-      elif LINUX and not (check_marker(item, 'linux')
-                          or check_marker(item, 'unix')):
-         item.add_marker(pytest.mark.skip())
-      elif MACOS and not (check_marker(item, 'macos')
-                          or check_marker(item, 'unix')):
-         item.add_marker(pytest.mark.skip())
+      if WIN32 and not has_markers(item, 'win32'):
+         item.add_marker(
+             pytest.mark.skip(reason='the test does not run on windows'))
+      elif LINUX and not (has_markers(item, 'linux')
+                          or has_markers(item, 'unix')):
+         item.add_marker(
+             pytest.mark.skip(reason='the test does not run on linux'))
+      elif MACOS and not (has_markers(item, 'macos')
+                          or has_markers(item, 'unix')):
+         item.add_marker(
+             pytest.mark.skip(reason='the test does not run on macos'))
 
       # tests that can run only explicitly
-      if check_marker(item,
-                      'explicitly_run') and not check_marker(item, 'skip'):
+      if has_markers(item, 'explicitly_run') and not has_markers(item, 'skip'):
          for arg in config.args:
             if item.nodeid.startswith(arg):
                break
          else:
-            item.add_marker(pytest.mark.skip())
+            item.add_marker(
+                pytest.mark.skip(
+                    reason='the test can only run when explicitly selected'))
 
 
 @pytest.fixture(scope='session')
@@ -103,7 +137,7 @@ def xvfb(request):
    use --no-xvfb flag
    """
    # skip running xvfb but still run the test
-   if not LINUX or not request.config.getoption("--no-xvfb"):
+   if not LINUX or not request.config.getoption('--no-xvfb'):
       yield
       return
 
@@ -168,35 +202,6 @@ def xvfb(request):
    print('quitting xvfb')
    xvfb_process.send_signal(signal.SIGQUIT)
    xvfb_process.wait()
-
-
-@pytest.fixture
-def firefox_profile(tmpdir):
-   dir_util.copy_tree(os.path.join(DIR, 'firefox', 'profile'), str(tmpdir))
-
-   return tmpdir
-
-
-@pytest.fixture
-def chromium_profile(tmpdir):
-   dir_util.copy_tree(os.path.join(DIR, 'chromium', 'user_data_dir'),
-                      str(tmpdir))
-
-   return tmpdir / 'Default', tmpdir
-
-
-@pytest.fixture
-def new_firefox_profile(tmpdir, xvfb):
-   FirefoxWrapper(tmpdir).start().stop()
-
-   return tmpdir
-
-
-@pytest.fixture
-def new_chromium_profile(tmpdir, xvfb):
-   ChromiumWrapper(tmpdir).start().stop()
-
-   return tmpdir / 'Default', tmpdir
 
 
 @pytest.fixture

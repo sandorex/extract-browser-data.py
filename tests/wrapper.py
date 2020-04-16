@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -46,6 +47,8 @@ def _get_window_id(pid):
 
 
 class Wrapper:
+   DEFAULT_EXECUTABLE_NAME: str
+
    def __init__(self, default_executable, executable, args):
       self.executable = executable if executable is not None else default_executable
       self.args = args
@@ -83,8 +86,31 @@ class Wrapper:
       self.process = None
       self.wid = None
 
+   @classmethod
+   def read_version(cls, executable=None):
+      if executable is None:
+         executable = cls.DEFAULT_EXECUTABLE_NAME
+
+      try:
+         version = subprocess.check_output(
+             [executable, '--version'],
+             stderr=subprocess.DEVNULL).decode('utf-8')
+      except FileNotFoundError:
+         return None
+
+      match = re.search(r'([0-9.]+)', version)
+      if match is None:
+         return None
+
+      version = match.group(1)
+
+      # raw string version and a integer version
+      return version, int(version.replace('.', ''))
+
 
 class FirefoxWrapper(Wrapper):
+   DEFAULT_EXECUTABLE_NAME: str = 'firefox'
+
    def __init__(self, profile, executable=None):
       self.profile_path = Path(profile).resolve().absolute()
 
@@ -94,7 +120,7 @@ class FirefoxWrapper(Wrapper):
       if firefox_args:
          args += firefox_args.split(' ')
 
-      super().__init__('firefox', executable, args)
+      super().__init__(self.DEFAULT_EXECUTABLE_NAME, executable, args)
 
    def _stop(self):
       subprocess.check_call(['xdotool', 'windowactivate', '--sync', self.wid])
@@ -108,6 +134,8 @@ class FirefoxWrapper(Wrapper):
 
 
 class ChromiumWrapper(Wrapper):
+   DEFAULT_EXECUTABLE_NAME: str = 'chromium-browser'
+
    def __init__(self,
                 user_data_dir,
                 executable=None,
@@ -128,7 +156,7 @@ class ChromiumWrapper(Wrapper):
       if chromium_args:
          args += chromium_args.split(' ')
 
-      super().__init__('chromium-browser', executable, args)
+      super().__init__(self.DEFAULT_EXECUTABLE_NAME, executable, args)
 
    def _stop(self):
       subprocess.check_call(['xdotool', 'windowactivate', '--sync', self.wid])

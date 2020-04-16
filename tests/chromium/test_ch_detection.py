@@ -1,9 +1,8 @@
 # pylint: disable=unused-argument
 
-import pytest
-
 import extract_browser_data as ebd
 import extract_browser_data.chromium.functions as func
+import pytest
 
 from ..wrapper import ChromiumWrapper
 
@@ -14,7 +13,7 @@ PROFILE_NAME = 'Default'
 
 def test_ch_running(xvfb, tmpdir, request):
    with ChromiumWrapper(tmpdir,
-                        executable=request.config.getoption("--chromium")):
+                        executable=request.config.getoption('--chromium')):
 
       profile = tmpdir / PROFILE_NAME
       assert func.read_profile_state(profile) == func.ProfileState.RUNNING
@@ -25,7 +24,7 @@ def test_ch_not_running(xvfb, tmpdir, request):
    # start and stop chromium
    ChromiumWrapper(
        tmpdir,
-       executable=request.config.getoption("--chromium")).start().stop()
+       executable=request.config.getoption('--chromium')).start().stop()
 
    profile = tmpdir / PROFILE_NAME
    assert func.read_profile_state(profile) == func.ProfileState.CLOSED
@@ -36,7 +35,7 @@ def test_ch_crashed(xvfb, tmpdir, request):
    # start and kill chromium
    ChromiumWrapper(
        tmpdir,
-       executable=request.config.getoption("--chromium")).start().kill()
+       executable=request.config.getoption('--chromium')).start().kill()
 
    profile = tmpdir / PROFILE_NAME
    assert func.read_profile_state(profile) == func.ProfileState.UNKNOWN
