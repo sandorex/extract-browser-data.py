@@ -22,7 +22,7 @@ jobs:
         run: |
           pip3 install setuptools wheel
           pip3 install tox
-          tox -e py37 -- -v tests/firefox/test_ff_schema.py
+          python3 -m tox -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
@@ -38,7 +38,7 @@ jobs:
         run: |
           pip3 install setuptools wheel
           pip3 install tox
-          tox -e py37 -- -v tests/chromium/test_ch_schema.py
+          python3 -m tox -e py37 -- -v tests/chromium/test_ch_schema.py
         env:
           # fixes chromium namespace issue
           CHROMIUM_ARGS: --no-sandbox --disable-gpu
@@ -62,7 +62,7 @@ jobs:
         run: |
           pip3 install setuptools wheel
           pip3 install tox
-          tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
+          python3 -m tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
 
   linux-general-tests:
     runs-on: ubuntu-latest
@@ -77,7 +77,7 @@ jobs:
         run: |
           pip3 install setuptools wheel
           pip3 install tox
-          tox -e ${{ matrix.python }} -- -m 'not browser'
+          python3 -m tox -e ${{ matrix.python }} -- -m 'not browser'
 
   formatting:
       runs-on: ubuntu-latest
@@ -88,7 +88,7 @@ jobs:
           run: |
             pip3 install setuptools wheel
             pip3 install tox
-            tox -e format
+            python3 -m tox -e format
 
   mypy:
       runs-on: ubuntu-latest
@@ -99,4 +99,4 @@ jobs:
           run: |
             pip3 install setuptools wheel
             pip3 install tox
-            tox -e mypy
+            python3 -m tox -e mypy
