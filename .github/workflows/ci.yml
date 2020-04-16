@@ -19,13 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          sudo docker-compose pull
-          sudo docker-compose run test -e py36 -- -v tests/firefox/test_ff_schema.py
+        run: tox -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
-          name: firefox-schema-cache
+          name: firefox-cache
           path: ./.tox
 
   chromium-schema-tests:
@@ -34,13 +32,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          sudo docker-compose pull
-          sudo docker-compose run test -e py36 -- -v tests/chromium/test_ch_schema.py
+        run: tox -e py37 -- -v tests/chromium/test_ch_schema.py
+        env:
+          # fixes chromium namespace issue
+          CHROMIUM_ARGS: --no-sandbox --disable-gpu
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
-          name: chromium-schema-cache
+          name: chromium-cache
           path: ./.tox
 
   linux-browser-tests:
@@ -50,13 +49,11 @@ jobs:
       fail-fast: false
       matrix:
         browser: [ 'firefox', 'chromium' ]
-        python: [ 'py36' ]
+        python: [ 'py36', 'py37', 'py38' ]
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          sudo docker-compose pull
-          sudo docker-compose run test -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
+        run: tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
 
   linux-general-tests:
     runs-on: ubuntu-latest
@@ -64,13 +61,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [ 'py36' ]
+        python: [ 'py36', 'py37', 'py38' ]
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          sudo docker-compose pull
-          sudo docker-compose run test -e ${{ matrix.python }} -- -m 'not browser'
+        run: tox -e ${{ matrix.python }} -- -m 'not browser'
 
   formatting:
       runs-on: ubuntu-latest
@@ -78,9 +73,7 @@ jobs:
       steps:
         - uses: actions/checkout@v2
         - name: Run the test
-          run: |
-            sudo docker-compose pull
-            sudo docker-compose run test -e format
+          run: tox -e format
 
   mypy:
       runs-on: ubuntu-latest
@@ -88,6 +81,4 @@ jobs:
       steps:
         - uses: actions/checkout@v2
         - name: Run the test
-          run: |
-            sudo docker-compose pull
-            sudo docker-compose run test -e mypy
+          run: tox -e mypy

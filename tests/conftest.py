@@ -121,7 +121,7 @@ def pytest_collection_modifyitems(items, config):
       # tests that can run only explicitly
       if has_markers(item, 'explicitly_run') and not has_markers(item, 'skip'):
          for arg in config.args:
-            if item.nodeid.startswith(arg):
+            if arg == item.nodeid or Path(item.fspath).samefile(arg):
                break
          else:
             item.add_marker(
