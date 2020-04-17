@@ -2,3 +2,19 @@
   chromium has Last Version in user data dir
 
 - read sessionstore-backups/recovery.jsonlz4 or previous.jsonlz4
+
+- https://github.com/pyenv/pyenv#installation
+
+- read firefox/chromium version when starting pytest
+
+- get unsupported schema version from
+   `tox -e pyXX -- --color=yes ... | tee logfile`
+   `cat logfile | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"` (removes ascii escape codes)
+
+- redo the docker image and make it the container image in GA, try to use actions with it, make the scripts too that will do the testing
+   alternative would be to test in GA using scripts and use the docker for local testing only
+
+   base from python image and install the browsers
+
+   add `ENV TERM xterm` and `ENV DBUS_SESSION_BUS_ADDRESS=/dev/null`
+

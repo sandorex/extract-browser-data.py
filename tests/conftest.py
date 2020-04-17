@@ -197,11 +197,11 @@ def xvfb(request):
    # tell them to terminate
    print('quitting fluxbox')
    wm_process.send_signal(signal.SIGQUIT)
-   wm_process.wait()
+   wm_process.wait(10)
 
    print('quitting xvfb')
    xvfb_process.send_signal(signal.SIGQUIT)
-   xvfb_process.wait()
+   xvfb_process.wait(10)
 
 
 @pytest.fixture

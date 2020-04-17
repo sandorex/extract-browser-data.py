@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
+# this script can run both as user and root
 
 set -e
-
-# correct the permissions
-sudo chown -R user:user .
 
 if command -v firefox &> /dev/null; then
    FIREFOX_PLATFORM_FILE=/usr/lib/firefox/platform.ini
@@ -37,6 +35,8 @@ case "$1" in
       exec /bin/bash
       ;;
    *)
-      tox "$@"
+      # using interactive shell so it loads pyenv stuff
+      # NOTE works as both user and root
+      sudo -E -u user -- bash -i -c "pyenv exec tox $*"
       ;;
 esac

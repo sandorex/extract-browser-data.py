@@ -108,19 +108,15 @@ class Wrapper:
       return version, int(version.replace('.', ''))
 
 
+# TODO read full version with build number (can be linux only, but if it does work on other platorms implement it)
 class FirefoxWrapper(Wrapper):
    DEFAULT_EXECUTABLE_NAME: str = 'firefox'
 
    def __init__(self, profile, executable=None):
       self.profile_path = Path(profile).resolve().absolute()
 
-      args = ['-profile', self.profile_path]
-
-      firefox_args = os.environ.get('FIREFOX_ARGS')
-      if firefox_args:
-         args += firefox_args.split(' ')
-
-      super().__init__(self.DEFAULT_EXECUTABLE_NAME, executable, args)
+      super().__init__(self.DEFAULT_EXECUTABLE_NAME, executable,
+                       ['-profile', self.profile_path])
 
    def _stop(self):
       subprocess.check_call(['xdotool', 'windowactivate', '--sync', self.wid])
@@ -152,11 +148,8 @@ class ChromiumWrapper(Wrapper):
       if additional_args is not None:
          args += additional_args
 
-      chromium_args = os.environ.get('CHROMIUM_ARGS')
-      if chromium_args:
-         args += chromium_args.split(' ')
-
-      super().__init__(self.DEFAULT_EXECUTABLE_NAME, executable, args)
+      super().__init__(self.DEFAULT_EXECUTABLE_NAME, executable,
+                       ['--no-sandbox', '--disable-gpu'] + args)
 
    def _stop(self):
       subprocess.check_call(['xdotool', 'windowactivate', '--sync', self.wid])
