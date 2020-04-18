@@ -22,8 +22,8 @@ jobs:
         - ${{ github.github_workspace }}:/project
       options: --user user
     steps:
-      - uses: actions/checkout@v2
       - run: ls -al
+      - uses: actions/checkout@v2
       - name: Run the test
         run: tox -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
