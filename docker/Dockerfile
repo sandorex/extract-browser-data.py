@@ -10,7 +10,7 @@ RUN apt-get update -qqy
 RUN apt-get install -qqy --no-install-recommends sudo coreutils build-essential \
    libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl \
    llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev \
-   python-openssl git ca-certificates xvfb x11-utils wmctrl xdotool fluxbox
+   python-openssl git ca-certificates xvfb x11-utils wmctrl xdotool fluxbox git
 
 # install firefox
 RUN apt-get install -qqy --no-install-recommends firefox
