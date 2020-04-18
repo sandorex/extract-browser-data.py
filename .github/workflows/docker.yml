@@ -1,0 +1,27 @@
+name: Docker Builder
+on:
+  push:
+    branches:
+      - ci-testing
+    paths:
+      - '.github/workflows/docker.yml'
+      - 'docker/**'
+  schedule:
+    # run everyday at 00:00
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build docker image
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish to Registry
+        uses: elgohr/Publish-Docker-Github-Action@2.14
+        with:
+          tag: ci-testing
+          name: sandorex/ebd-test-image
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+          registry: quay.io
+          workdir: ./docker

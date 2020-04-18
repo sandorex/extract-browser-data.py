@@ -14,15 +14,12 @@ on:
 
 jobs:
   firefox-schema-tests:
-    runs-on: ubuntu-latest
     name: Firefox Schema Tests
+    container: quay.io/sandorex/ebd-test-image:ci-testing
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          pip3 install setuptools wheel
-          pip3 install tox
-          python3 -m tox -e py37 -- -v tests/firefox/test_ff_schema.py
+        run: tox -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
@@ -30,15 +27,12 @@ jobs:
           path: ./.tox
 
   chromium-schema-tests:
-    runs-on: ubuntu-latest
     name: Chromium Schema Tests
+    container: quay.io/sandorex/ebd-test-image:ci-testing
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          pip3 install setuptools wheel
-          pip3 install tox
-          python3 -m tox -e py37 -- -v tests/chromium/test_ch_schema.py
+        run: tox -e py37 -- -v tests/chromium/test_ch_schema.py
         env:
           # fixes chromium namespace issue
           CHROMIUM_ARGS: --no-sandbox --disable-gpu
@@ -49,8 +43,8 @@ jobs:
           path: ./.tox
 
   linux-browser-tests:
-    runs-on: ubuntu-latest
     name: Linux ${{ matrix.browser }} (${{ matrix.python }})
+    container: quay.io/sandorex/ebd-test-image:ci-testing
     strategy:
       fail-fast: false
       matrix:
@@ -59,14 +53,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          pip3 install setuptools wheel
-          pip3 install tox
-          python3 -m tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
+        run: tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
 
   linux-general-tests:
-    runs-on: ubuntu-latest
     name: Linux General Tests (${{ matrix.python }})
+    container: quay.io/sandorex/ebd-test-image:ci-testing
     strategy:
       fail-fast: false
       matrix:
@@ -74,29 +65,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: |
-          pip3 install setuptools wheel
-          pip3 install tox
-          python3 -m tox -e ${{ matrix.python }} -- -m 'not browser'
+        run: tox -e ${{ matrix.python }} -- -m 'not browser'
 
   formatting:
-      runs-on: ubuntu-latest
-      name: Formatting Checks
-      steps:
-        - uses: actions/checkout@v2
-        - name: Run the test
-          run: |
-            pip3 install setuptools wheel
-            pip3 install tox
-            python3 -m tox -e format
+    name: Formatting Checks
+    container: quay.io/sandorex/ebd-test-image:ci-testing
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run the test
+        run: tox -e format
 
   mypy:
-      runs-on: ubuntu-latest
-      name: Type Checks
-      steps:
-        - uses: actions/checkout@v2
-        - name: Run the test
-          run: |
-            pip3 install setuptools wheel
-            pip3 install tox
-            python3 -m tox -e mypy
+    name: Type Checks
+    container: quay.io/sandorex/ebd-test-image:ci-testing
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run the test
+        run: tox -e mypy
