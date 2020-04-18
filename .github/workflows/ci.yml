@@ -17,7 +17,7 @@ jobs:
     name: Firefox Schema Tests
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
-      options: --user root
+      # options: --user root
     steps:
       - uses: actions/checkout@v2
       - run: |
