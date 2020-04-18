@@ -6,8 +6,9 @@ set -e
 # rerun as user if ran as root
 [ "$(id -u)" -eq 0 ] && exec sudo -i -u user -- "$0" "$@"
 
-# always start in this directory
-cd /project
+# always start in the directory supplied
+cd "$1"
+shift
 
 if command -v firefox &> /dev/null; then
    FIREFOX_PLATFORM_FILE=/usr/lib/firefox/platform.ini
@@ -35,6 +36,8 @@ if command -v chromium-browser &> /dev/null; then
 
    echo "Found Chromium $CHROMIUM_VERSION"
 fi
+
+sudo chown -R user:user .
 
 case "$1" in
    bash|shell|sh)

@@ -10,7 +10,7 @@ RUN apt-get update -qqy
 RUN apt-get install -qqy --no-install-recommends sudo coreutils build-essential \
    libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl \
    llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev \
-   python-openssl git ca-certificates xvfb x11-utils wmctrl xdotool fluxbox git
+   python-openssl git ca-certificates xvfb x11-utils wmctrl xdotool fluxbox
 
 # install firefox
 RUN apt-get install -qqy --no-install-recommends firefox
@@ -66,6 +66,6 @@ RUN mkdir -p /project \
 
 COPY --chown=user:user entrypoint.sh /
 RUN chmod +x /entrypoint.sh
-ENTRYPOINT [ '/entrypoint.sh' ]
+ENTRYPOINT [ '/entrypoint.sh', '/project' ]
 
 WORKDIR "/project"

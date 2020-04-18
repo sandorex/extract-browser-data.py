@@ -18,15 +18,13 @@ jobs:
     name: Firefox Schema Tests
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
-      volumes:
-        - ${{ github.github_workspace }}:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
         run: |
           ls -al
           ls -al /project
-          /entrypoint.sh -e py37 -- -v tests/firefox/test_ff_schema.py
+          /entrypoint.sh ${{ github.github_workspace }} -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
