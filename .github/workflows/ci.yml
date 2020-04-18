@@ -16,17 +16,16 @@ jobs:
   firefox-schema-tests:
     runs-on: ubuntu-latest
     name: Firefox Schema Tests
-    # container:
-    #   image: quay.io/sandorex/ebd-test-image:ci-testing
-    #   volumes:
-    #     - ${{ github.github_workspace }}:/project
-    #   options: --user user
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      volumes:
+        - ${{ github.github_workspace }}:/project
+      options: --user user
     steps:
       - uses: actions/checkout@v2
+      - run: ls -al
       - name: Run the test
-        run: |
-          docker-compose pull
-          docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
+        run: tox -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
