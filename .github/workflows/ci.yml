@@ -20,6 +20,7 @@ jobs:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
         - ${{ github.github_workspace }}:/project
+      options: --user user
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
@@ -37,6 +38,7 @@ jobs:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
         - ${{ github.github_workspace }}:/project
+      options: --user user
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
@@ -54,6 +56,7 @@ jobs:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
         - ${{ github.github_workspace }}:/project
+      options: --user user
     strategy:
       fail-fast: false
       matrix:
@@ -71,6 +74,7 @@ jobs:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
         - ${{ github.github_workspace }}:/project
+      options: --user user
     strategy:
       fail-fast: false
       matrix:
@@ -87,6 +91,7 @@ jobs:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
         - ${{ github.github_workspace }}:/project
+      options: --user user
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
@@ -99,6 +104,7 @@ jobs:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
         - ${{ github.github_workspace }}:/project
+      options: --user user
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
