@@ -1,5 +1,5 @@
-#!/usr/bin/env bash -l
-# this script can run both as user and root
+#!/usr/bin/env bash
+# this is only supposed to run the user entrypoint script
 
 set -e
 
@@ -30,11 +30,6 @@ if command -v chromium-browser &> /dev/null; then
    echo "Found Chromium $CHROMIUM_VERSION"
 fi
 
-case "$1" in
-   bash|shell|sh)
-      exec /bin/bash
-      ;;
-   *)
-      tox "$@"
-      ;;
-esac
+# run the user script as the user
+# shellcheck source=./user-entrypoint.sh
+sudo -E -u user -- /user-entrypoint.sh "$@"

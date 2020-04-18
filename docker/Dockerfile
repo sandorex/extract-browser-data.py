@@ -56,7 +56,6 @@ RUN printf '%s\n%s\n%s\n\n%s\n' 'export PATH="/home/user/.pyenv/bin:$PATH"' \
                               'eval "$(pyenv init -)"' \
                               'eval "$(pyenv virtualenv-init -)"' \
                               >> /home/user/.profile
-                              # "$(cat /home/user/.profile)" > /home/user/.profile
 
 # NOTE this is at the bottom to avoid rebuilding python versions to update the script
 USER root
@@ -65,9 +64,6 @@ RUN mkdir -p /project \
    && chown -R user:user /project
 
 COPY --chown=user:user entrypoint.sh /
-RUN chmod +x /entrypoint.sh
-ENTRYPOINT [ '/entrypoint.sh' ]
-
-WORKDIR "/project"
-
-USER user
+COPY --chown=user:user user-entrypoint.sh /
+RUN chmod +x /entrypoint.sh /user-entrypoint.sh
+CMD [ '/bin/bash' ]
