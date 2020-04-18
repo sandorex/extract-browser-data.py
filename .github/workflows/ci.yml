@@ -20,6 +20,9 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v2
+      - run: |
+        id
+        ls -alh
       - run: sudo -E -i -u user tox -e py37 -- -v tests/firefox/test_ff_schema.py
       # - name: Run the test
       #   run: |
