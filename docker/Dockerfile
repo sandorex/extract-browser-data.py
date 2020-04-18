@@ -66,6 +66,8 @@ RUN mkdir -p /project \
 
 COPY --chown=user:user entrypoint.sh /
 RUN chmod +x /entrypoint.sh
-ENTRYPOINT [ '/entrypoint.sh', '/project' ]
+ENTRYPOINT [ '/entrypoint.sh' ]
 
 WORKDIR "/project"
+
+USER user
