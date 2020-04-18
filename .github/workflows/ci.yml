@@ -19,7 +19,7 @@ jobs:
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
-        - .:/project
+        - ${{ github.github_workspace }}:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
@@ -36,14 +36,11 @@ jobs:
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
-        - .:/project
+        - ${{ github.github_workspace }}:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
         run: tox -e py37 -- -v tests/chromium/test_ch_schema.py
-        env:
-          # fixes chromium namespace issue
-          CHROMIUM_ARGS: --no-sandbox --disable-gpu
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
@@ -56,7 +53,7 @@ jobs:
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
-        - .:/project
+        - ${{ github.github_workspace }}:/project
     strategy:
       fail-fast: false
       matrix:
@@ -73,7 +70,7 @@ jobs:
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
-        - .:/project
+        - ${{ github.github_workspace }}:/project
     strategy:
       fail-fast: false
       matrix:
@@ -89,7 +86,7 @@ jobs:
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
-        - .:/project
+        - ${{ github.github_workspace }}:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
@@ -101,7 +98,7 @@ jobs:
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
-        - .:/project
+        - ${{ github.github_workspace }}:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
