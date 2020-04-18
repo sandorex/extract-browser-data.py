@@ -15,15 +15,16 @@ jobs:
   firefox-schema-tests:
     runs-on: ubuntu-latest
     name: Firefox Schema Tests
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      options: --user root
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          id
-          ls -al
-      - name: Run the test
-        run: |
-          docker-compose pull
-          docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
+      - run: sudo -E -i -u user tox -e py37 -- -v tests/firefox/test_ff_schema.py
+      # - name: Run the test
+      #   run: |
+      #     docker-compose pull
+      #     docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
