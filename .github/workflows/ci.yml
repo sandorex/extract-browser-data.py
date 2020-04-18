@@ -17,13 +17,16 @@ jobs:
     name: Firefox Schema Tests
     container:
       image: quay.io/sandorex/ebd-test-image:ci-testing
-      # options: --user root
+      # it must run as root otherwise checkout fails with 'EACCESS permission denied'
+      options: --user root
     steps:
       - uses: actions/checkout@v2
       - run: |
           id
           ls -alh
-      - run: sudo -E -i -u user tox -e py37 -- -v tests/firefox/test_ff_schema.py
+      - run: |
+        sudo chown -R user:user .
+        sudo -E -i -u user tox -e py37 -- -v tests/firefox/test_ff_schema.py
       # - name: Run the test
       #   run: |
       #     docker-compose pull
