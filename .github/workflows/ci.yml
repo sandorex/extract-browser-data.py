@@ -16,96 +16,98 @@ jobs:
   firefox-schema-tests:
     runs-on: ubuntu-latest
     name: Firefox Schema Tests
-    container:
-      image: quay.io/sandorex/ebd-test-image:ci-testing
-      volumes:
-        - ${{ github.github_workspace }}:/project
-      options: --user user
+    # container:
+    #   image: quay.io/sandorex/ebd-test-image:ci-testing
+    #   volumes:
+    #     - ${{ github.github_workspace }}:/project
+    #   options: --user user
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
-        run: tox -e py37 -- -v tests/firefox/test_ff_schema.py
+        run: |
+          docker-compose pull
+          docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
           name: firefox-cache
           path: ./.tox
 
-  chromium-schema-tests:
-    runs-on: ubuntu-latest
-    name: Chromium Schema Tests
-    container:
-      image: quay.io/sandorex/ebd-test-image:ci-testing
-      volumes:
-        - ${{ github.github_workspace }}:/project
-      options: --user user
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run the test
-        run: tox -e py37 -- -v tests/chromium/test_ch_schema.py
-      - uses: actions/upload-artifact@v1
-        if: failure()
-        with:
-          name: chromium-cache
-          path: ./.tox
+  # chromium-schema-tests:
+  #   runs-on: ubuntu-latest
+  #   name: Chromium Schema Tests
+  #   container:
+  #     image: quay.io/sandorex/ebd-test-image:ci-testing
+  #     volumes:
+  #       - ${{ github.github_workspace }}:/project
+  #     options: --user user
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Run the test
+  #       run: tox -e py37 -- -v tests/chromium/test_ch_schema.py
+  #     - uses: actions/upload-artifact@v1
+  #       if: failure()
+  #       with:
+  #         name: chromium-cache
+  #         path: ./.tox
 
-  linux-browser-tests:
-    runs-on: ubuntu-latest
-    name: Linux ${{ matrix.browser }} (${{ matrix.python }})
-    container:
-      image: quay.io/sandorex/ebd-test-image:ci-testing
-      volumes:
-        - ${{ github.github_workspace }}:/project
-      options: --user user
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [ 'firefox', 'chromium' ]
-        python: [ 'py36', 'py37', 'py38' ]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run the test
-        run: tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
+  # linux-browser-tests:
+  #   runs-on: ubuntu-latest
+  #   name: Linux ${{ matrix.browser }} (${{ matrix.python }})
+  #   container:
+  #     image: quay.io/sandorex/ebd-test-image:ci-testing
+  #     volumes:
+  #       - ${{ github.github_workspace }}:/project
+  #     options: --user user
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       browser: [ 'firefox', 'chromium' ]
+  #       python: [ 'py36', 'py37', 'py38' ]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Run the test
+  #       run: tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
 
-  linux-general-tests:
-    runs-on: ubuntu-latest
-    name: Linux General Tests (${{ matrix.python }})
-    container:
-      image: quay.io/sandorex/ebd-test-image:ci-testing
-      volumes:
-        - ${{ github.github_workspace }}:/project
-      options: --user user
-    strategy:
-      fail-fast: false
-      matrix:
-        python: [ 'py36', 'py37', 'py38' ]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run the test
-        run: tox -e ${{ matrix.python }} -- -m 'not browser'
+  # linux-general-tests:
+  #   runs-on: ubuntu-latest
+  #   name: Linux General Tests (${{ matrix.python }})
+  #   container:
+  #     image: quay.io/sandorex/ebd-test-image:ci-testing
+  #     volumes:
+  #       - ${{ github.github_workspace }}:/project
+  #     options: --user user
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       python: [ 'py36', 'py37', 'py38' ]
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Run the test
+  #       run: tox -e ${{ matrix.python }} -- -m 'not browser'
 
-  formatting:
-    runs-on: ubuntu-latest
-    name: Formatting Checks
-    container:
-      image: quay.io/sandorex/ebd-test-image:ci-testing
-      volumes:
-        - ${{ github.github_workspace }}:/project
-      options: --user user
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run the test
-        run: tox -e format
+  # formatting:
+  #   runs-on: ubuntu-latest
+  #   name: Formatting Checks
+  #   container:
+  #     image: quay.io/sandorex/ebd-test-image:ci-testing
+  #     volumes:
+  #       - ${{ github.github_workspace }}:/project
+  #     options: --user user
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Run the test
+  #       run: tox -e format
 
-  mypy:
-    runs-on: ubuntu-latest
-    name: Type Checks
-    container:
-      image: quay.io/sandorex/ebd-test-image:ci-testing
-      volumes:
-        - ${{ github.github_workspace }}:/project
-      options: --user user
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run the test
-        run: tox -e mypy
+  # mypy:
+  #   runs-on: ubuntu-latest
+  #   name: Type Checks
+  #   container:
+  #     image: quay.io/sandorex/ebd-test-image:ci-testing
+  #     volumes:
+  #       - ${{ github.github_workspace }}:/project
+  #     options: --user user
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Run the test
+  #       run: tox -e mypy
