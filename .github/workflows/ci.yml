@@ -7,7 +7,6 @@ on:
       - '.github/workflows/ci.yml'
       - 'tests/**'
       - 'extract_browser_data/**'
-      - 'docker-compose.yml'
   schedule:
     # every day at 01:00
     - cron: '0 1 * * *'
@@ -22,9 +21,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run the test
         run: |
+          id
           ls -al
-          ls -al /project
-          /entrypoint.sh ${{ github.github_workspace }} -e py37 -- -v tests/firefox/test_ff_schema.py
+          docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
