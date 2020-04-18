@@ -14,8 +14,12 @@ on:
 
 jobs:
   firefox-schema-tests:
+    runs-on: ubuntu-latest
     name: Firefox Schema Tests
-    container: quay.io/sandorex/ebd-test-image:ci-testing
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      volumes:
+        - .:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
@@ -27,8 +31,12 @@ jobs:
           path: ./.tox
 
   chromium-schema-tests:
+    runs-on: ubuntu-latest
     name: Chromium Schema Tests
-    container: quay.io/sandorex/ebd-test-image:ci-testing
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      volumes:
+        - .:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
@@ -43,8 +51,12 @@ jobs:
           path: ./.tox
 
   linux-browser-tests:
+    runs-on: ubuntu-latest
     name: Linux ${{ matrix.browser }} (${{ matrix.python }})
-    container: quay.io/sandorex/ebd-test-image:ci-testing
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      volumes:
+        - .:/project
     strategy:
       fail-fast: false
       matrix:
@@ -56,8 +68,12 @@ jobs:
         run: tox -e ${{ matrix.python }} -- -m '${{ matrix.browser }}'
 
   linux-general-tests:
+    runs-on: ubuntu-latest
     name: Linux General Tests (${{ matrix.python }})
-    container: quay.io/sandorex/ebd-test-image:ci-testing
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      volumes:
+        - .:/project
     strategy:
       fail-fast: false
       matrix:
@@ -68,16 +84,24 @@ jobs:
         run: tox -e ${{ matrix.python }} -- -m 'not browser'
 
   formatting:
+    runs-on: ubuntu-latest
     name: Formatting Checks
-    container: quay.io/sandorex/ebd-test-image:ci-testing
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      volumes:
+        - .:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
         run: tox -e format
 
   mypy:
+    runs-on: ubuntu-latest
     name: Type Checks
-    container: quay.io/sandorex/ebd-test-image:ci-testing
+    container:
+      image: quay.io/sandorex/ebd-test-image:ci-testing
+      volumes:
+        - .:/project
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
