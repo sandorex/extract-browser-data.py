@@ -17,10 +17,11 @@ jobs:
     name: Firefox Schema Tests
     steps:
       - uses: actions/checkout@v2
-      - name: Run the test
-        run: |
+      - run: |
           id
           ls -al
+      - name: Run the test
+        run: |
           docker-compose pull
           docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
