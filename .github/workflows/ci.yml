@@ -15,8 +15,6 @@ jobs:
   firefox-schema-tests:
     runs-on: ubuntu-latest
     name: Firefox Schema Tests
-    container:
-      image: quay.io/sandorex/ebd-test-image:ci-testing
     steps:
       - uses: actions/checkout@v2
       - name: Run the test
