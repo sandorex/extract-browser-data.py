@@ -3,6 +3,12 @@
 
 set -e
 
+# rerun as user if ran as root
+[ "$(id -u)" -eq 0 ] && exec sudo -i -u user -- "$0" "$@"
+
+# always start in this directory
+cd /project
+
 if command -v firefox &> /dev/null; then
    FIREFOX_PLATFORM_FILE=/usr/lib/firefox/platform.ini
 
@@ -35,8 +41,6 @@ case "$1" in
       exec /bin/bash
       ;;
    *)
-      # using interactive shell so it loads pyenv stuff
-      # NOTE works as both user and root
-      sudo -E -u user -- bash -i -c "pyenv exec tox $*"
+      tox "$@"
       ;;
 esac

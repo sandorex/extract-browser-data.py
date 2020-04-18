@@ -37,10 +37,6 @@ USER user
 
 RUN curl 'https://pyenv.run' | bash
 
-RUN echo 'export PATH="/home/user/.pyenv/bin:$PATH"' >> /home/user/.bashrc \
-   && echo 'eval "$(pyenv init -)"' >> /home/user/.bashrc \
-   && echo 'eval "$(pyenv virtualenv-init -)"' >> /home/user/.bashrc
-
 RUN git clone 'https://github.com/momo-lab/xxenv-latest.git' /home/user/.pyenv/plugins/xxenv-latest
 
 # install python versions
@@ -52,8 +48,15 @@ RUN /home/user/.pyenv/bin/pyenv latest install 3.8
 RUN /home/user/.pyenv/bin/pyenv latest global 3.6 3.7 3.8
 
 # install tox
-RUN /home/user/.pyenv/bin/pyenv exec pip3 --disable-pip-version-check --no-cache-dir install setuptools wheel \
-   && /home/user/.pyenv/bin/pyenv exec pip3 --disable-pip-version-check --no-cache-dir install tox
+RUN /home/user/.pyenv/bin/pyenv exec pip3 --disable-pip-version-check --no-cache-dir -qq install setuptools wheel \
+   && /home/user/.pyenv/bin/pyenv exec pip3 --disable-pip-version-check --no-cache-dir -qq install tox
+
+# prepending to .profile so it runs in non interactive shells
+RUN printf '%s\n%s\n%s\n\n%s\n' 'export PATH="/home/user/.pyenv/bin:$PATH"' \
+                              'eval "$(pyenv init -)"' \
+                              'eval "$(pyenv virtualenv-init -)"' \
+                              >> /home/user/.profile
+                              # "$(cat /home/user/.profile)" > /home/user/.profile
 
 # NOTE this is at the bottom to avoid rebuilding python versions to update the script
 USER root
@@ -66,5 +69,3 @@ RUN chmod +x /entrypoint.sh
 ENTRYPOINT [ '/entrypoint.sh' ]
 
 WORKDIR "/project"
-
-USER user
