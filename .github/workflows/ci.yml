@@ -20,7 +20,7 @@ jobs:
       image: quay.io/sandorex/ebd-test-image:ci-testing
       volumes:
         - ${{ github.github_workspace }}:/project
-      options: --user user
+      options: --user 0
     steps:
       - run: ls -al
       - uses: actions/checkout@v2
