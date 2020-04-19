@@ -4,6 +4,6 @@ FROM quay.io/sandorex/ebd-test-image:ci-testing
 
 USER root
 
-RUN usermod -u ${UID:-1001} -g ${GID:-1001} user
+RUN usermod -u ${UID:-1001} user
 
 USER user
