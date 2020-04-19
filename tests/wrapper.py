@@ -95,9 +95,11 @@ class FirefoxWrapper(Wrapper):
                        ['-profile', self.profile_path])
 
    def _stop(self):
-      autopy.key.tap('q', [autopy.key.Modifier.CONTROL])
-      time.sleep(0.5)
-      autopy.key.tap(autopy.key.Code.RETURN)
+      for i in range(3):
+         autopy.key.tap('q', [autopy.key.Modifier.CONTROL])
+         time.sleep(0.5)
+         autopy.key.tap(autopy.key.Code.RETURN)
+         time.sleep(1)
 
 
 class ChromiumWrapper(Wrapper):
