@@ -15,45 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import re
 import subprocess
 import time
 from pathlib import Path
 
-
-def _get_window_id(pid):
-   ids = subprocess.check_output(
-       ['xdotool', 'search', '--onlyvisible', '--pid',
-        str(pid)]).decode('utf-8').strip().split(' ')
-
-   wid = None
-   if len(ids) == 1:
-      wid = ids[0]
-   else:
-      for window_id in ids:
-         try:
-            subprocess.check_call(['xdotool', 'getwindowname', window_id])
-         except subprocess.CalledProcessError:
-            continue
-
-         wid = window_id
-         break
-
-   if wid is None:
-      raise Exception('could not find the window id for Firefox')
-
-   return wid
+import autopy
 
 
 class Wrapper:
    DEFAULT_EXECUTABLE_NAME: str
 
    def __init__(self, default_executable, executable, args):
-      self.executable = executable if executable is not None else default_executable
+      if executable is not None:
+         self.executable = executable
+      else:
+         self.executable = default_executable
+
       self.args = args
       self.process = None
-      self.wid = None
 
    def __enter__(self):
       return self.start()
@@ -64,10 +44,8 @@ class Wrapper:
    def start(self):
       self.process = subprocess.Popen([self.executable] + self.args)
 
-      # delay for it to startup properly
-      time.sleep(4)
-
-      self.wid = _get_window_id(self.process.pid)
+      # delay for it to start properly
+      time.sleep(6)
       return self
 
    def _stop(self):
@@ -77,14 +55,12 @@ class Wrapper:
       self._stop()
 
       self.process.wait(100)
-      self.wid = None
       self.process = None
 
    def kill(self):
       self.process.kill()
       self.process.wait(100)
       self.process = None
-      self.wid = None
 
    @classmethod
    def read_version(cls, executable=None):
@@ -119,23 +95,18 @@ class FirefoxWrapper(Wrapper):
                        ['-profile', self.profile_path])
 
    def _stop(self):
-      subprocess.check_call(['xdotool', 'windowactivate', '--sync', self.wid])
+      autopy.key.tap('q', [autopy.key.Modifier.CONTROL])
       time.sleep(0.5)
-      subprocess.check_call(['wmctrl', '-ic', self.wid])
-      time.sleep(0.5)
-      subprocess.check_call(['xdotool', 'key', 'Return'])
-
-
-# TODO pass which keystore to use as an enum
+      autopy.key.tap(autopy.key.Code.RETURN)
 
 
 class ChromiumWrapper(Wrapper):
    DEFAULT_EXECUTABLE_NAME: str = 'chromium-browser'
 
+   # TODO pass which keystore to use as an enum
    def __init__(self,
                 user_data_dir,
                 executable=None,
-                additional_args=None,
                 use_basic_password_store=True):
       self.user_data_dir = Path(user_data_dir).resolve().absolute()
 
@@ -145,13 +116,10 @@ class ChromiumWrapper(Wrapper):
          # NOTE any other password store will ask for a password
          args.append('--password-store=basic')
 
-      if additional_args is not None:
-         args += additional_args
-
       super().__init__(self.DEFAULT_EXECUTABLE_NAME, executable,
                        ['--no-sandbox', '--disable-gpu'] + args)
 
    def _stop(self):
-      subprocess.check_call(['xdotool', 'windowactivate', '--sync', self.wid])
+      autopy.key.tap('f', [autopy.key.Modifier.ALT])
       time.sleep(0.5)
-      subprocess.check_call(['wmctrl', '-ic', self.wid])
+      autopy.key.tap('x')
