@@ -42,7 +42,9 @@ jobs:
         python-version: ${{ matrix.python }}
     - name: Install linux dependencies
       if: ${{ matrix.linux }}
-      run: sudo apt-get install -qqy --no-install-recommends xvfb x11-utils wmctrl xdotool fluxbox ${{ matrix.package }}
+      run: |
+        sudo apt-get upgrade -qqy
+        sudo apt-get install -qqy --no-install-recommends xvfb x11-utils wmctrl xdotool fluxbox ${{ matrix.package }}
     - name: Install tox
       run: python -m pip install tox
     - name: Test with tox
