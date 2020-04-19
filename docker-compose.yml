@@ -6,4 +6,12 @@ services:
     image: quay.io/sandorex/ebd-test-image:ci-testing
     build:
       context: ./docker
-    entrypoint: [ "/entrypoint.sh", "/project" ]
+    entrypoint: [ "/entrypoint.sh" ]
+
+  test-ci:
+    volumes:
+      - .:/project
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.ci
+    entrypoint: [ "/entrypoint.sh" ]

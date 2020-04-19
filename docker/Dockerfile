@@ -67,3 +67,5 @@ COPY --chown=user:user entrypoint.sh /
 COPY --chown=user:user user-entrypoint.sh /
 RUN chmod +x /entrypoint.sh /user-entrypoint.sh
 CMD [ '/bin/bash' ]
+
+USER user

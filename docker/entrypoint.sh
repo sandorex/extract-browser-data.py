@@ -30,6 +30,20 @@ if command -v chromium-browser &> /dev/null; then
    echo "Found Chromium $CHROMIUM_VERSION"
 fi
 
+# source the pyenv stuff
+# shellcheck disable=SC1091
+source /home/user/.profile
+
+case "$1" in
+   bash|shell|sh)
+      bash
+      ;;
+   *)
+      # run tox
+      tox "$@"
+      ;;
+esac
+
 # run the user script as the user
-# shellcheck source=./user-entrypoint.sh
-sudo -E -u user -- /user-entrypoint.sh "$@"
+# # shellcheck source=./user-entrypoint.sh
+# sudo -E -u user -- /user-entrypoint.sh "$@"
