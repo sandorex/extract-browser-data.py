@@ -21,13 +21,15 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
         browser: [ firefox ]
         python: [ 3.6, 3.7, 3.8 ]
-      include:
-        - python: 3.6
-          tox: py36
-        - python: 3.7
-          tox: py37
-        - python: 3.8
-          tox: py38
+
+        # for now im gonna specify tox versions manually
+        include:
+          - python: 3.6
+            tox: py36
+          - python: 3.7
+            tox: py37
+          - python: 3.8
+            tox: py38
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python }}
