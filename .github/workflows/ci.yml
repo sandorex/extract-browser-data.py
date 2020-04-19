@@ -14,7 +14,6 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
     name: ${{ matrix.browser }} ${{ matrix.os }} (${{ matrix.tox }})
     strategy:
       fail-fast: false
@@ -26,10 +25,6 @@ jobs:
         include:
           - os: ubuntu-latest
             linux: true
-
-          # macos isnt support currently
-          - os: macos-latest
-            experimental: true
 
           # for now im gonna specify tox versions manually
           - python: 3.7
