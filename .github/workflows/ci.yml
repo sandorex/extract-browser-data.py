@@ -12,20 +12,47 @@ on:
     - cron: '0 1 * * *'
 
 jobs:
-  firefox-schema-tests:
-    runs-on: ubuntu-latest
-    name: Firefox Schema Tests
+  build:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.browser }} ${{ matrix.os }} (${{ matrix.tox }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        browser: [ firefox ]
+        python: [ 3.6, 3.7, 3.8 ]
+      include:
+        - python: 3.6
+          tox: py36
+        - python: 3.7
+          tox: py37
+        - python: 3.8
+          tox: py38
     steps:
-      - uses: actions/checkout@v2
-      - run: |
-          id
-          ls -alh
-      - run: docker-compose run test-ci -e py37 -- -v tests/firefox/test_ff_schema.py
-      - uses: actions/upload-artifact@v1
-        if: failure()
-        with:
-          name: firefox-cache
-          path: ./.tox
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install dependencies
+      run: python -m pip install tox
+    - name: Test with tox
+      run: tox -e ${{ matrix.tox }} -- -m 'firefox'
+
+  # firefox-schema-tests:
+  #   runs-on: ubuntu-latest
+  #   name: Firefox Schema Tests
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - run: |
+  #         id
+  #         ls -alh
+  #     - run: docker-compose run test-ci -e py37 -- -v tests/firefox/test_ff_schema.py
+  #     - uses: actions/upload-artifact@v1
+  #       if: failure()
+  #       with:
+  #         name: firefox-cache
+  #         path: ./.tox
 
 
   # chromium-schema-tests:
