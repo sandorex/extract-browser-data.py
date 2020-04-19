@@ -24,6 +24,7 @@ jobs:
       - run: |
           id
           ls -alh
+          ls -alh /home
       - run: /entrypoint.sh $PWD -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
