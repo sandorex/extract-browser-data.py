@@ -20,7 +20,9 @@ jobs:
       - run: |
           id
           ls -alh
-      - run: docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
+      - run: |
+          docker-compose pull
+          docker-compose run test -e py37 -- -v tests/firefox/test_ff_schema.py
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
