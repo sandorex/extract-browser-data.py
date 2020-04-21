@@ -54,12 +54,12 @@ class Wrapper:
    def stop(self):
       self._stop()
 
-      self.process.wait(100)
+      self.process.wait()
       self.process = None
 
    def kill(self):
       self.process.kill()
-      self.process.wait(100)
+      self.process.wait()
       self.process = None
 
    @classmethod
