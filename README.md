@@ -1,6 +1,8 @@
 # extract-browser-data.py
 Python library to extract data from browsers (only chromium and firefox based ones)
 
+This project has been abandoned in favor of [GO rewrite](https://github.com/sandorex/ebd)
+
 > **WARNING: this library is in it's alpha stage**
 
 ## Cross-Browser Compatability
